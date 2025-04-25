@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'employee_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Employee" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-custom">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">Employee</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'employee_profile' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">My Profile</span>
+                </a>
+                <a href="{% url 'employee_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5 text-gray-600"></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'employee_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-gray-100 border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+                {% csrf_token %}
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-custom bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar-check text-custom"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ leave_balance }}</h4>
+                                <p class="text-gray-600">Leave Balance</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-clock text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ leaves_taken }}</h4>
+                                <p class="text-gray-600">Leaves Taken</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar-times text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ pending_requests }}</h4>
+                                <p class="text-gray-600">Pending Requests</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-money-bill-wave text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">${{ last_payroll }}</h4>
+                                <p class="text-gray-600">Last Payroll</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-2">
+                        <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                            <h3 class="text-lg font-medium mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <a href="{% url 'employee_request_leave' %}"
+                                    class="p-4 bg-gray-200 rounded-lg text-left hover:bg-gray-300">
+                                    <button class="p-4 rounded-lg text-left !rounded-button">
+                                        <i class="fas fa-calendar-plus text-custom mb-2"></i>
+                                        <h4 class="font-medium">Request Leave</h4>
+                                        <p class="text-sm text-gray-600">Submit new leave application</p>
+                                    </button>
+                                </a>
+                                <a href="{% url 'employee_payroll' %}"
+                                    class="p-4 bg-gray-200 rounded-lg text-left hover:bg-gray-300">
+                                    <button class="p-4 rounded-lg text-left !rounded-button">
+                                        <i class="fas fa-file-invoice text-green-500 mb-2"></i>
+                                        <h4 class="font-medium">Download Payslip</h4>
+                                        <p class="text-sm text-gray-600">View latest salary statement</p>
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium mb-4">Leave History</h3>
+                            {% if dashboard_leave_history %}
+                            {% for leave in dashboard_leave_history %}
+                            <div class="p-4 mt-3 bg-gray-200 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-medium">{{ leave.type }}</h4>
+                                        <p class="text-sm text-gray-600">
+                                            {{ leave.start|date:"M d, Y" }}
+                                            {% if leave.start != leave.end %} - {{ leave.end|date:"M d, Y" }}{% endif %}
+                                        </p>
+                                    </div>
+                                    {% if leave.status == "PENDING" %}
+                                    <span
+                                        class="px-3 py-1 bg-yellow-500 bg-opacity-20 text-yellow-500 rounded-full text-sm">Pending</span>
+                                    {% elif leave.status == "APPROVED" %}
+                                    <span
+                                        class="px-3 py-1 bg-green-500 bg-opacity-20 text-green-500 rounded-full text-sm">Approved</span>
+                                    {% elif leave.status == "REJECTED" %}
+                                    <span
+                                        class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded-full text-sm">Rejected</span>
+                                    {% elif leave.status == "CANCELLED" %}
+                                    <span
+                                        class="px-2 py-1 bg-gray-500 bg-opacity-20 text-gray-500 rounded-full text-sm">Cancelled</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p class="text-sm text-gray-500">No leave records found.</p>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                            <h3 class="text-lg font-medium mb-4">Notifications</h3>
+                            <div class="space-y-4 overflow-y-auto max-h-[230px] pr-2"
+                                id="employeeNotificationContainer">
+                                {% for note in notifications %}
+                                <div class="p-4 rounded-lg border border-opacity-20 flex justify-between items-start gap-4
+                                    {% if note.type == 'success' %}
+                                        bg-green-500/10 border-green-500 text-green-500
+                                    {% elif note.type == 'warning' %}
+                                        bg-yellow-500/10 border-yellow-500 text-yellow-500
+                                    {% elif note.type == 'error' %}
+                                        bg-red-500/10 border-red-500 text-red-500
+                                    {% else %}
+                                        bg-custom bg-opacity-10 border-custom text-custom
+                                    {% endif %}" data-  ="{{ note.message|slugify }}">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-info-circle"></i>
+                                        <p class="ml-3 text-sm">{{ note.message }}</p>
+                                    </div>
+                                    <button onclick="dismissNotification(this)"
+                                        class="ml-auto text-xl font-bold px-2 text-gray-400 hover:text-gray-600">
+                                        &times;
+                                    </button>
+                                </div>
+                                {% empty %}
+                                <p class="text-sm text-gray-500">No new notifications</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium mb-4">Personal Information</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Employee ID:</span>
+                                    <span class="block text-base font-semibold text-gray-800">{{ employee_id }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Position:</span>
+                                    <span class="block text-base font-semibold text-gray-800">{{ designation }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Join Date:</span>
+                                    <span class="block text-base font-semibold text-gray-800">{{ date_of_joining }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Dismiss clicked notification
+        function dismissNotification(button) {
+            const card = button.closest("div[data-message]");
+            const key = card.dataset.message;
+
+            card.remove();
+
+            // Store in localStorage
+            let dismissed = JSON.parse(localStorage.getItem("dismissedEmployeeNotifications") || "[]");
+            if (!dismissed.includes(key)) {
+                dismissed.push(key);
+                localStorage.setItem("dismissedEmployeeNotifications", JSON.stringify(dismissed));
+            }
+        }
+
+        // On page load, remove previously dismissed notifications
+        document.addEventListener("DOMContentLoaded", function () {
+            const dismissed = JSON.parse(localStorage.getItem("dismissedEmployeeNotifications") || "[]");
+            document.querySelectorAll("#employeeNotificationContainer > div[data-message]").forEach(card => {
+                const key = card.dataset.message;
+                if (dismissed.includes(key)) {
+                    card.remove();
+                }
+            });
+        });
+    </script>
+
+</body>

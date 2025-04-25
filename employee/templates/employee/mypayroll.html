@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Logo"  class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'employee_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Employee" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">Employee</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'employee_profile' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">My Profile</span>
+                </a>
+                <a href="{% url 'employee_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5 "></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'employee_payroll' %}"
+                    class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <h1 class="text-2xl font-bold mb-6">My Payroll</h1>
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-money-bill-wave text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ current_salary }}</h4>
+                                <p class="text-gray-600">Current Month Salary</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-hand-holding-usd text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ total_bonus }}</h4>
+                                <p class="text-gray-600">Total Bonus</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-file-invoice text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ payslip_count }}</h4>
+                                <p class="text-gray-600">Payslips Generated</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-red-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-minus-circle text-red-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ deductions }}</h4>
+                                <p class="text-gray-600">Deductions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-3">
+                        <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                            <h3 class="text-lg font-medium mb-4">Salary History</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-200">
+                                        <tr class="text-left border-b border-gray-300">
+                                            <th class="px-4 py-3 text-left">Month</th>
+                                            <th class="px-4 py-3 text-left">Basic Salary</th>
+                                            <th class="px-4 py-3 text-left">Bonus</th>
+                                            <th class="px-4 py-3 text-left">Deductions</th>
+                                            <th class="px-4 py-3 text-left">Net Salary</th>
+                                            <th class="px-4 py-3 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-300">
+                                        {% for record in salary_history %}
+                                        <tr class="hover:bg-gray-100 transition">
+                                            <td class="px-4 py-3">{{ record.month }}</td>
+                                            <td class="px-4 py-3">{{ record.salary }}</td>
+                                            <td class="px-4 py-3">{{ record.bonus }}</td>
+                                            <td class="px-4 py-3">{{ record.deductions }}</td>
+                                            <td class="px-4 py-3 font-semibold text-green-700">{{ record.net }}</td>
+                                            <td class="px-4 py-3 text-left">
+                                                <a href="{% url 'download_my_payslipE' %}" target="_blank">
+                                                    <button class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
+                                                        <i class="fas fa-download"></i>
+                                                    </button>
+                                                </a>
+                                            </td>
+                                            
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-gray-500">No payslips available
+                                                yet.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>

@@ -1,0 +1,394 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'hr_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-custom">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">HR Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'hr_profile' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'hr_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'hr_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'hr_payroll' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                {% csrf_token %}
+                <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-custom bg-opacity-20 rounded-lg">
+                                <i class="fas fa-users text-custom"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_employees }}</h4>
+                                <p class="text-gray-600">Total Employees</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar-check text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_pending_leaves }}</h4>
+                                <p class="text-gray-600">Pending Leaves</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-money-bill-wave text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">${{ total_upcoming_payroll }}</h4>
+                                <p class="text-gray-600">Upcoming Payroll</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-purple-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-building text-purple-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_departments }}</h4>
+                                <p class="text-gray-600">Departments</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-2">
+                        <div class="col-span-2">
+                            <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                                <h3 class="text-lg font-medium mb-4">My Actions</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <a href="{% url 'hr_add_employee' %}"
+                                        class="p-4 bg-gray-200  rounded-lg text-left hover:bg-gray-300">
+                                        <button class="p-4 rounded-lg text-left !rounded-button">
+                                            <i class="fas fa-user-plus text-custom mb-2"></i>
+                                            <h4 class="font-medium">Add Employee</h4>
+                                            <p class="text-sm text-gray-600">Create new employee</p>
+                                        </button>
+                                    </a>
+                                    <a href="{% url 'hr_leave_approval' %}"
+                                        class="p-4 bg-gray-200  rounded-lg text-left hover:bg-gray-300">
+                                        <button class="p-4 rounded-lg text-left !rounded-button">
+                                            <i class="fas fa-calendar-check text-green-500 mb-2"></i>
+                                            <h4 class="font-medium">Leave Approvals</h4>
+                                            <p class="text-sm text-gray-600">Manage leave requests</p>
+                                        </button>
+                                    </a>
+                                    <a href="{% url 'hr_payroll' %}"
+                                        onclick="localStorage.setItem('openPayslipModal', 'true')"
+                                        class="p-4 bg-gray-200 rounded-lg text-left hover:bg-gray-300">
+                                        <div class="p-4 rounded-lg text-left !rounded-button">
+                                            <i class="fas fa-file-invoice-dollar text-yellow-500 mb-2"></i>
+                                            <h4 class="font-medium">Generate Payslip</h4>
+                                            <p class="text-sm text-gray-600">Create salary reports</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium mb-4">Notifications</h3>
+                            <div class="space-y-4">
+                                <div class="space-y-4 overflow-y-auto max-h-[260px] pr-2" id="notificationContainer">
+                                    {% for note in notifications %}
+                                    <div class="p-4 rounded-lg border border-opacity-20 flex justify-between items-start gap-4
+                                        {% if note.type == 'success' %}
+                                            bg-green-500/10 border-green-500 text-green-500
+                                        {% elif note.type == 'warning' %}
+                                            bg-yellow-500/10 border-yellow-500 text-yellow-500
+                                        {% elif note.type == 'error' %}
+                                            bg-red-500/10 border-red-500 text-red-500
+                                        {% else %}
+                                            bg-custom bg-opacity-10 border-custom text-custom
+                                        {% endif %}" data-message="{{ note.message|slugify }}">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-info-circle"></i>
+                                            <p class="ml-3 text-sm">{{ note.message }}</p>
+                                        </div>
+                                        <button onclick="dismissNotification(this)"
+                                            class="ml-auto text-xl font-bold px-2 text-gray-400 hover:text-gray-600">
+                                            &times;
+                                        </button>
+                                    </div>
+                                    {% empty %}
+                                    <p class="text-sm text-gray-500">No new notifications</p>
+                                    {% endfor %}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                            <h3 class="text-lg font-medium mb-4">Leave Status</h3>
+                            <div class="space-y-4">
+                                {% for leave in leave_status_list %}
+                                <div class="flex items-center justify-between p-4 bg-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <img src="/media/{{ leave.profile_image }}" alt="Employee"
+                                            class="w-10 h-10 rounded-full" />
+                                        <div class="ml-3">
+                                            <h4 class="font-medium">{{ leave.emp_name }}</h4>
+                                            <p class="text-sm text-gray-600">
+                                                {{ leave.leave_type }}
+                                                ({{ leave.start_date}} to
+                                                {{ leave.end_date }})</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button
+                                            onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.emp_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', `{{ leave.reason }}`)"
+                                            class="p-2 text-green-500 hover:bg-green-500 hover:bg-opacity-20 rounded">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button
+                                            onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.emp_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', `{{ leave.reason }}`)"
+                                            class="p-2 text-red-500 hover:bg-red-500 hover:bg-opacity-20 rounded">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-sm text-gray-500">No pending leave requests.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- ✅ Leave Action Modal -->
+    <div id="leaveModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-md mx-auto p-6 relative shadow-xl animate-fade-in">
+            <!-- Close Button -->
+            <button onclick="closeModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+
+            <!-- Title -->
+            <h3 class="text-xl font-semibold mb-4 text-center">Leave Request Details</h3>
+
+            <!-- Details -->
+            <div class="space-y-3 text-sm text-gray-700 leading-relaxed">
+                <div>Employee:<strong> <span id="modalEmpName" class="ml-1"></span></strong></div>
+                <div>Leave Type:<strong> <span id="modalType" class="ml-1"></span></strong></div>
+                <div>Start Date:<strong> <span id="modalStart" class="ml-1"></span></strong></div>
+                <div>End Date:<strong> <span id="modalEnd" class="ml-1"></span></strong></div>
+                <div>Reason:<strong> <span id="modalReason" class="ml-1"></span></strong></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-6 flex justify-between">
+                <button id="approveBtn" onclick="processLeaveAction('APPROVED')"
+                    class="w-1/2 mr-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Approve</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+
+                <button id="rejectBtn" onclick="processLeaveAction('REJECTED')"
+                    class="w-1/2 ml-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Reject</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional animation -->
+    <style>
+        .animate-fade-in {
+            animation: fadeInModal 0.25s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #notificationContainer::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #notificationContainer::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.6);
+            /* gray-400 */
+            border-radius: 6px;
+        }
+    </style>
+    <script>
+        // Dismiss clicked notification
+        function dismissNotification(button) {
+            const card = button.closest("div[data-message]");
+            const key = card.dataset.message;
+
+            card.remove();
+
+            // Store in localStorage
+            let dismissed = JSON.parse(localStorage.getItem("dismissedEmployeeNotifications") || "[]");
+            if (!dismissed.includes(key)) {
+                dismissed.push(key);
+                localStorage.setItem("dismissedEmployeeNotifications", JSON.stringify(dismissed));
+            }
+        }
+
+        // On page load, remove previously dismissed notifications
+        document.addEventListener("DOMContentLoaded", function () {
+            const dismissed = JSON.parse(localStorage.getItem("dismissedEmployeeNotifications") || "[]");
+            document.querySelectorAll("#employeeNotificationContainer > div[data-message]").forEach(card => {
+                const key = card.dataset.message;
+                if (dismissed.includes(key)) {
+                    card.remove();
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let dismissed = JSON.parse(localStorage.getItem("dismissedAdminNotifications") || "[]");
+            document.querySelectorAll("#notificationsContainer > div[data-message]").forEach(card => {
+                const key = card.dataset.message;
+                if (dismissed.includes(key)) {
+                    card.remove();
+                }
+            });
+        });
+
+        let selectedLeaveId = null;
+
+        function openLeaveModal(id, name, type, start, end, reason) {
+            selectedLeaveId = id;
+            document.getElementById("modalEmpName").textContent = name;
+            document.getElementById("modalType").textContent = type;
+            document.getElementById("modalStart").textContent = start;
+            document.getElementById("modalEnd").textContent = end;
+            document.getElementById("modalReason").textContent = reason;
+            document.getElementById("leaveModal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("leaveModal").classList.add("hidden");
+        }
+
+        function processLeaveAction(action) {
+            const approveBtn = document.getElementById("approveBtn");
+            const rejectBtn = document.getElementById("rejectBtn");
+
+            // Show spinner and disable buttons
+            const targetBtn = action === 'APPROVED' ? approveBtn : rejectBtn;
+            targetBtn.querySelector('.btn-label').textContent = 'Processing...';
+            targetBtn.querySelector('.spinner').classList.remove('hidden');
+
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+
+            fetch("{% url 'hr_leave_action' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: `leave_id=${selectedLeaveId}&action=${action}`
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem("leaveActionStatus", action);
+                        location.reload();
+                    } else {
+                        // alert("Error: " + data.error);
+                        location.reload();
+                    }
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const status = localStorage.getItem("leaveActionStatus");
+            if (status) {
+                const toast = document.createElement("div");
+                toast.className = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg z-50 text-white";
+                toast.classList.add(status === "APPROVED" ? "bg-green-300" : "bg-red-300");
+                toast.innerHTML = status === "APPROVED" ? "✅ Leave approved!" : "❌ Leave rejected!";
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                    localStorage.removeItem("leaveActionStatus");
+                }, 3000);
+            }
+        });
+    </script>
+</body>

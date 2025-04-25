@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1"></script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium"></script>
+</head>
+
+<body class="min-h-screen bg-white font-['Poppins']">
+    <header class="w-full border-b border-gray-300">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-3.5rem)] py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-gray-900 tracking-tight">Access Denied</h2>
+                <p class="mt-3 text-base text-gray-600">You do not have permission to view this page.</p>
+            </div>
+            <div class="bg-gray-100 shadow-xl rounded-xl p-8 space-y-6">
+                <div class="text-center">
+                    <a href="{% url 'login' %}" style="width: 240px;justify-content: center; font-size: large;"
+                        class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-base font-semibold text-white bg-custom hover:bg-custom/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-custom transition-all duration-200 transform hover:scale-[1.02]">
+                        <i class="fas fa-arrow-left mr-2"></i>Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>

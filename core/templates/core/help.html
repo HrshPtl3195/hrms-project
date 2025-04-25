@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System - Help</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1"></script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium"></script>
+</head>
+
+<body class="min-h-screen bg-white font-['Poppins']">
+    <!-- Header -->
+    <header class="w-full border-b border-gray-300">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Section -->
+    <main class="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-3.5rem)] py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full px-4 py-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">Help & Support</h1>
+
+            <div class="max-w-xl w-full mx-auto">
+                <div class="bg-gray-100 shadow-xl rounded-xl p-8 space-y-6">
+                    <!-- Django Flash Messages -->
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="p-3 rounded-md text-sm 
+                            {% if message.tags == 'success' %} bg-green-200 text-green-800 
+                            {% elif message.tags == 'error' %} bg-red-200 text-red-800 
+                            {% elif message.tags == 'warning' %} bg-yellow-200 text-yellow-800 
+                            {% else %} bg-gray-200 text-gray-800 {% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Help & Support Form -->
+                    <form method="POST" action="{% url 'help' %}" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-900 mb-1">Name</label>
+                            <input type="text" id="name" name="name" required
+                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent" />
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-900 mb-1">Email</label>
+                            <input type="email" id="email" name="email" required
+                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent" />
+                        </div>
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-900 mb-1">Subject</label>
+                            <input type="text" id="subject" name="subject" required
+                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent" />
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-900 mb-1">Message</label>
+                            <textarea id="message" name="message" rows="4" required
+                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"></textarea>
+                        </div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-custom hover:bg-custom/90 focus:ring-2 focus:ring-custom transition-all duration-200 transform hover:scale-[1.02]">
+                            Send Message
+                        </button>
+                    </form>
+                    <div class="text-center mt-4">
+                        <a href="{% url 'login' %}" class="text-custom hover:text-custom/90 inline-flex items-center">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            <span>Back to Login</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-300">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col items-center justify-between h-14 md:flex-row">
+                <div class="flex items-center space-x-6">
+                    <a href="{% url 'help' %}" class="text-sm text-gray-600 hover:text-gray-900">Help</a>
+                    <a href="{% url 'terms_privacy' %}" class="text-sm text-gray-600 hover:text-gray-900">Terms &
+                        Privacy</a>
+                </div>
+                <div class="text-sm text-gray-600">
+                    © 2024 HR Management System. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

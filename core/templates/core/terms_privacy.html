@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System - Terms & Privacy</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1"></script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium"></script>
+</head>
+
+<body class="min-h-screen bg-white font-['Poppins']">
+    <!-- Header -->
+    <header class="w-full border-b border-gray-300">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-8 w-auto" />
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Section -->
+    <main class="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-3.5rem)] py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto px-4 py-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">Terms of Service & Privacy Policy</h1>
+            <div class="max-w-4xl w-full">
+                <div class="bg-gray-100 p-6 rounded-xl space-y-6 text-gray-900">
+                    <div class="ml-1 mb-6 flex items-center">
+                        <a href="{% url 'login' %}" class="text-custom hover:text-custom/90 inline-flex items-center">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            <span>Back to Login</span>
+                        </a>
+                    </div>
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Terms of Service</h2>
+                        <div class="space-y-4">
+                            <p>By accessing and using the HR Management System, you agree to these terms of service:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>You must be at least 18 years old to use this service</li>
+                                <li>You are responsible for maintaining the confidentiality of your account</li>
+                                <li>You agree not to share your login credentials with any third party</li>
+                                <li>We reserve the right to modify or terminate the service at any time</li>
+                                <li>You agree to use the service in compliance with all applicable laws</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Privacy Policy</h2>
+                        <div class="space-y-4">
+                            <p>We take your privacy seriously. Here’s how we handle your data:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>We collect only necessary personal information for service operation</li>
+                                <li>Your data is encrypted and stored securely</li>
+                                <li>We never share your personal information with third parties without consent</li>
+                                <li>You can request access to or deletion of your data at any time</li>
+                                <li>We use cookies to improve your experience and analyze usage patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Data Security</h2>
+                        <div class="space-y-4">
+                            <p>We implement various security measures to protect your information:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>End-to-end encryption for all sensitive data</li>
+                                <li>Regular security audits and updates</li>
+                                <li>Multi-factor authentication options</li>
+                                <li>Automated backup systems</li>
+                                <li>24/7 system monitoring</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-300">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col items-center justify-between h-14 md:flex-row">
+                <div class="flex items-center space-x-6">
+                    <a href="{% url 'help' %}" class="text-sm text-gray-600 hover:text-gray-900">Help</a>
+                    <a href="{% url 'terms_privacy' %}" class="text-sm text-gray-600 hover:text-gray-900">Terms &
+                        Privacy</a>
+                </div>
+                <div class="text-sm text-gray-600">
+                    © 2024 HR Management System. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

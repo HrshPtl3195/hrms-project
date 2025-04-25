@@ -1,0 +1,1020 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'office_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">Office Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'office_profile' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'office_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'office_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'office_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+                <a href="{% url 'office_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'office_my_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-bold mb-6">Employee Management</h2>
+                    <a href="{% url 'office_add_employee' %}"
+                        class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95">
+                        <i class="fas fa-plus mr-2"></i>Employee
+                    </a>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-6 mt-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex gap-4">
+                            <div class="relative">
+                                <input type="text" id="searchTab" name="searchTab" placeholder="Search employees..."
+                                    class="bg-gray-200 border border-gray-300 rounded-lg px-4 py-2 pl-10 w-74" />
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-600"></i>
+                            </div>
+                            <div>
+                                <select id="department" name="department_id"
+                                    class="bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 w-48">
+                                    <option value="">All Departments</option>
+                                    {% for dept in department_list %} <option value="{{ dept.id }}" 
+                                    {% if request.GET.department_id == dept.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <button id="clearFilterBtn"
+                                    class="rounded-lg px-4 py-2  bg-gray-300 rounded hover:bg-gray-400">
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openDownloadModal()"
+                                class="p-2 text-gray-600 hover:text-gray-900 bg-gray-200 hover:bg-gray-400 rounded-full">
+                                <i class="fas fa-download"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Employee</th>
+                                    <th class="px-4 py-3 text-left">Email</th>
+                                    <th class="px-4 py-3 text-left">Department</th>
+                                    <th class="px-4 py-3 text-left">Designation</th>
+                                    <th class="px-4 py-3 text-left">Joining Date</th>
+                                    <th class="px-4 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-300">
+                                {% for emp in employee_list %}
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <img src="/media/{{ emp.profile_image }}" alt="Profile"
+                                                class="w-10 h-10 rounded-full" />
+                                            <span class="ml-3 font-medium text-gray-700">{{ emp.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-700">{{ emp.email }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-700">{{ emp.department }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-700">{{ emp.designation }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-700">{{ emp.joining_date }}</td>
+                                    <td class="px-4 py-3 text-right space-x-2">
+                                        <button class="edit-button" 
+                                            data-emp-id="{{ emp.employee_id }}"
+                                            data-name="{{ emp.name }}"
+                                            data-email="{{ emp.email }}"
+                                            data-department="{{ emp.department }}"
+                                            data-designation="{{ emp.designation }}"
+                                            data-joining="{{ emp.joining_date }}"
+                                            data-image="{{ emp.profile_image }}"
+                                            
+                                            data-current-email="{{ emp.contact.current_email }}"
+                                            data-current-phone="{{ emp.contact.current_phone }}"
+                                            data-permanent-email="{{ emp.contact.permanent_email }}"
+                                            data-permanent-phone="{{ emp.contact.permanent_phone }}"
+                                            data-current-address="{{ emp.contact.current_address }}"
+                                            data-permanent-address="{{ emp.contact.permanent_address }}">
+                                            <i class="fa fa-edit text-blue-600"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-700 delete-button"
+                                            data-employee-id="{{ emp.employee_id }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-gray-500">No employees found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="mt-6 flex items-center justify-between">
+                            <!-- Pagination Info -->
+                            <div class="text-gray-600 mt-2 pagination-info">
+                                Showing {{ start }} to {{ end }} of {{ total_count }} entries
+                            </div>
+
+                            <!-- Pagination Buttons -->
+                            {% if page_obj.paginator.num_pages > 1 %}
+                            <div class="flex space-x-2 pagination">
+                                {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                <a href="?page={{ num }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
+                                    {{ num }}
+                                </a>
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-lg animate-fade-in">
+            <button onclick="closeDeleteModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            <h3 class="text-xl font-semibold mb-4 text-center text-red-600">Confirm Deletion</h3>
+            <p class="text-center text-gray-700 mb-6">Are you sure you want to delete this employee?</p>
+
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <div class="flex justify-between gap-4">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 rounded-lg">Cancel</button>
+                    <button type="submit"
+                        class="w-1/2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Download Format Modal -->
+    <div id="downloadModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-lg animate-fade-in">
+            <!-- Close button -->
+            <button onclick="closeDownloadModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+
+            <h3 class="text-xl font-semibold mb-4 text-center">Download Employee List</h3>
+
+            <div class="flex flex-col gap-4">
+                <button onclick="handleDownload('excel')" id="downloadExcelBtn"
+                    class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Download Excel</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+                <button onclick="handleDownload('pdf')" id="downloadPDFBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Download PDF</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ✅ Success Toast -->
+    <div id="downloadSuccessToast"
+        class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Employee list downloaded successfully!
+    </div>
+
+    <!-- ❌ Error Toast -->
+    <div id="downloadErrorToast"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to download file. Please try again.
+    </div>
+    <!-- ✅ Delete Success Toast -->
+    <div id="deleteSuccessToast"
+        class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Employee deleted successfully!
+    </div>
+
+    <!-- ❌ Delete Error Toast -->
+    <div id="deleteErrorToast"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to delete employee. Please try again.
+    </div>
+
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+    <script>
+        // Open delete modal function
+        function openDeleteModal(employeeId) {
+            console.log("Opening delete modal for Employee ID:", employeeId);
+            employeeId = parseInt(employeeId);
+
+            const deleteForm = document.getElementById("deleteForm");
+            if (deleteForm) {
+                deleteForm.action = `/office-admin/employee/delete/${employeeId}/`;
+                console.log("Delete form action set to:", deleteForm.action);
+
+                const deleteModal = document.getElementById("deleteModal");
+                if (deleteModal) {
+                    deleteModal.classList.remove("hidden");
+                    console.log("Delete modal displayed");
+                } else {
+                    console.error("Delete modal element not found");
+                }
+            } else {
+                console.error("Delete form element not found");
+            }
+        }
+
+        // Close delete modal function
+        function closeDeleteModal() {
+            const deleteModal = document.getElementById("deleteModal");
+            if (deleteModal) {
+                deleteModal.classList.add("hidden");
+                console.log("Delete modal hidden");
+            } else {
+                console.error("Delete modal element not found");
+            }
+        }
+
+        // Event Delegation: Attach to a static parent container that holds the dynamic employee list
+        document.addEventListener("click", function (event) {
+            // Find the closest delete button within the clicked element
+            const button = event.target.closest(".delete-button");
+            if (button) {
+                const employeeId = button.getAttribute("data-employee-id");
+                if (employeeId) {
+                    openDeleteModal(employeeId);
+                } else {
+                    console.error("Employee ID not found on delete button");
+                }
+            }
+        });
+        function attachDeleteListeners() {
+            const deleteButtons = document.querySelectorAll(".delete-button");
+            deleteButtons.forEach((button) => {
+                button.addEventListener("click", function () {
+                    const employeeId = button.getAttribute("data-employee-id");
+                    openDeleteModal(employeeId);
+                });
+            });
+            console.log("Delete button listeners attached");
+        }
+
+        // Call this function after every filtering operation
+        attachDeleteListeners();
+
+        // Debugging: Confirm the listener attachment
+        console.log("Delete button event listener attached to parent container");
+
+    </script>
+
+    <script>
+        function openDownloadModal() {
+            document.getElementById("downloadModal").classList.remove("hidden");
+        }
+        function closeDownloadModal() {
+            document.getElementById("downloadModal").classList.add("hidden");
+
+            // Reset both buttons
+            ["Excel", "PDF"].forEach(type => {
+                const btn = document.getElementById(`download${type}Btn`);
+                btn.querySelector(".btn-label").textContent = `Download ${type}`;
+                btn.querySelector(".spinner").classList.add("hidden");
+                btn.disabled = false;
+            });
+        }
+
+        function handleDownload(format) {
+            const query = document.getElementById("searchTab").value;
+            const departmentId = document.getElementById("department").value;
+
+            const url = new URL("{% url 'office_employee_export' %}", window.location.origin);
+            if (query) url.searchParams.append("q", query);
+            if (departmentId) url.searchParams.append("department_id", departmentId);
+            url.searchParams.append("format", format);
+
+            const buttonId = format.toLowerCase() === "pdf" ? "downloadPDFBtn" : "downloadExcelBtn";
+            const button = document.getElementById(buttonId);
+
+            const label = button.querySelector(".btn-label");
+            const spinner = button.querySelector(".spinner");
+
+            label.textContent = "Preparing...";
+            spinner.classList.remove("hidden");
+            button.disabled = true;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Download failed");
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = window.URL.createObjectURL(blob);
+                    downloadLink.download = format === "excel" ? "EmployeeList.xlsx" : "EmployeeList.pdf";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    showToast("success");
+                    closeDownloadModal();
+                })
+                .catch(error => {
+                    console.error("Download error:", error);
+                    showToast("error");
+                    closeDownloadModal();
+                });
+        }
+
+        function showToast(type) {
+            const toast = document.getElementById(
+                type === "success" ? "downloadSuccessToast" : "downloadErrorToast"
+            );
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
+
+        // Show delete success or error toast
+        function showDeleteToast(type) {
+            const toast = document.getElementById(
+                type === "success" ? "deleteSuccessToast" : "deleteErrorToast"
+            );
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
+
+        // Attach delete form submission to trigger the toast and reset the list
+        document.getElementById("deleteForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const deleteUrl = this.action;
+
+            fetch(deleteUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        closeDeleteModal();
+                        showDeleteToast("success");
+                        // Clear filters and load the original list
+                        searchInput.value = "";
+                        departmentDropdown.value = "";
+                        performSearch(1); // Load the first page of the original list
+                    } else {
+                        showDeleteToast("error");
+                        // Reset to the original list after a failed deletion as well
+                        searchInput.value = "";
+                        departmentDropdown.value = "";
+                        performSearch(1);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Delete error:", error);
+                    showDeleteToast("error");
+                    // Reset to the original list even if there's an error
+                    searchInput.value = "";
+                    departmentDropdown.value = "";
+                    performSearch(1);
+                });
+        });
+    </script>
+    <script>
+        function downloadEmployees(format) {
+            const query = document.getElementById("searchTab").value;
+            const departmentId = document.getElementById("department").value;
+
+            const url = new URL("{% url 'office_employee_export' %}", window.location.origin);
+            if (query) url.searchParams.append("q", query);
+            if (departmentId) url.searchParams.append("department_id", departmentId);
+            url.searchParams.append("format", format);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Read cookie
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+
+            const status = getCookie("employeeAddStatus");
+
+            if (status === "success" || status === "error") {
+                const toast = document.createElement("div");
+                toast.className = "fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 text-white";
+
+                if (status === "success") {
+                    toast.classList.add("bg-green-500");
+                    toast.innerHTML = "✅ Employee added successfully!";
+                } else {
+                    toast.classList.add("bg-red-300");
+                    toast.innerHTML = "❌ Failed to add employee. Please try again.";
+                }
+
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+
+                // Clear cookie
+                document.cookie = "employeeAddStatus=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+        });
+    </script>
+    <script>
+        const searchInput = document.getElementById("searchTab");
+        const departmentDropdown = document.getElementById("department");
+        const tableBody = document.querySelector("tbody");
+
+        function renderEmployees(employees) {
+            tableBody.innerHTML = "";
+
+            if (employees.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-500 py-4">No matching employees found.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            employees.forEach(emp => {
+            const row = `
+                <tr class="hover:bg-gray-100">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <img src="/media/${emp.profile_image}" alt="Profile" class="w-10 h-10 rounded-full" />
+                            <span class="ml-3 font-medium text-gray-700">${emp.name}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${emp.email}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${emp.department}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${emp.designation}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${emp.joining_date}</td>
+                    <td class="px-4 py-3 text-right space-x-2">
+                        <button class="edit-button"
+                            data-emp-id="${emp.employee_id}"
+                            data-name="${emp.name}"
+                            data-email="${emp.email}"
+                            data-department="${emp.department}"
+                            data-designation="${emp.designation}"
+                            data-joining="${emp.joining_date}"
+                            data-image="${emp.profile_image}"
+                            data-current-email="${emp.contact?.current_email || ''}"
+                            data-current-phone="${emp.contact?.current_phone || ''}"
+                            data-permanent-email="${emp.contact?.permanent_email || ''}"
+                            data-permanent-phone="${emp.contact?.permanent_phone || ''}"
+                            data-current-address="${emp.contact?.current_address || ''}"
+                            data-permanent-address="${emp.contact?.permanent_address || ''}">
+                            <i class="fa fa-edit text-blue-600"></i>
+                        </button>
+                        <button class="text-red-500 hover:text-red-700 delete-button" data-employee-id="${emp.employee_id}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+
+            // Reattach delete listeners after rendering new list
+            attachEditListeners();
+            attachDeleteListeners();
+        }
+
+        function attachEditListeners() {
+            const editButtons = document.querySelectorAll(".edit-button");
+            editButtons.forEach((button) => {
+                button.addEventListener("click", function () {
+                    openEditEmployeeModal(button);
+                });
+            });
+        }
+
+        function renderPaginationInfo(start, end, total) {
+            const paginationInfo = document.querySelector(".pagination-info");
+            paginationInfo.textContent = `Showing ${start} to ${end} of ${total} entries`;
+        }
+
+        function renderPagination(totalCount, pageNumber, pageSize) {
+            const paginationDiv = document.querySelector(".pagination");
+            paginationDiv.innerHTML = "";
+            const totalPages = Math.ceil(totalCount / pageSize);
+
+            // Fix: Hide pagination if there is only one page
+            if (totalPages <= 1) return;
+
+            // Previous Button
+            if (pageNumber > 1) {
+                const prevButton = document.createElement("button");
+                prevButton.textContent = "Previous";
+                prevButton.classList.add("px-3", "py-1", "bg-gray-200", "rounded", "hover:bg-gray-300");
+                prevButton.onclick = () => {
+                    performSearch(pageNumber - 1);
+                };
+                paginationDiv.appendChild(prevButton);
+            }
+
+            // Page Numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement("button");
+                pageButton.textContent = i;
+                pageButton.classList.add("px-3", "py-1", "bg-gray-200", "rounded", "hover:bg-gray-300");
+
+                // Fix: Apply active page style correctly
+                if (i === pageNumber) {
+                    pageButton.classList.remove("bg-gray-200");
+                    pageButton.classList.add("bg-custom", "text-white");
+                }
+
+                pageButton.onclick = () => {
+                    performSearch(i);
+                };
+                paginationDiv.appendChild(pageButton);
+            }
+
+            // Next Button
+            if (pageNumber < totalPages) {
+                const nextButton = document.createElement("button");
+                nextButton.textContent = "Next";
+                nextButton.classList.add("px-3", "py-1", "bg-gray-200", "rounded", "hover:bg-gray-300");
+                nextButton.onclick = () => {
+                    performSearch(pageNumber + 1);
+                };
+                paginationDiv.appendChild(nextButton);
+            }
+        }
+
+        function performSearch(pageNumber = 1) {
+            const query = searchInput.value.trim();
+            const deptId = departmentDropdown.value;
+
+            const url = new URL("{% url 'office_employee_search' %}", window.location.origin);
+            url.searchParams.append("q", query);
+            url.searchParams.append("page", pageNumber);
+            if (deptId) {
+                url.searchParams.append("department_id", deptId);
+            }
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    renderEmployees(data.employees);
+                    renderPagination(data.total_count, data.page_number, data.page_size);
+                    renderPaginationInfo(data.start_index, data.end_index, data.total_count);
+                })
+                .catch(error => console.error("Search Error:", error));
+        }
+
+
+        // Event listeners for live typing and department change
+        searchInput.addEventListener("input", debounce(() => performSearch(1), 300));
+        departmentDropdown.addEventListener("change", () => performSearch(1));
+
+
+        // Clear search and filter
+        function clearFilters() {
+            const searchInput = document.getElementById("searchTab");
+            const departmentDropdown = document.getElementById("department");
+
+            // Reset input values
+            searchInput.value = "";
+            departmentDropdown.value = "";
+
+            // Perform the search with default parameters (page 1, no filters)
+            performSearch(1);
+        }
+
+        // Attach clear filter button event
+        document.getElementById("clearFilterBtn").addEventListener("click", clearFilters);
+
+
+        function debounce(fn, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+    </script>
+    <!-- 🟦 Edit Employee Modal (Final Version Aligned with Profile Modal) -->
+    <div id="editEmployeeModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="editEmployeeModalBox"
+            class="bg-white rounded-xl shadow-xl w-full max-w-xl min-h-[250px] max-h-[95vh] overflow-y-auto relative animate-fade-in px-6 py-8 flex flex-col items-center transition-all duration-300">
+
+            <!-- ❌ Close Button -->
+            <button onclick="closeEditEmployeeModal()"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+
+            <!-- 🧾 Modal Title -->
+            <h2 class="text-3xl font-bold mb-4 text-custom text-center">Edit Employee</h2>
+
+
+
+            <!-- 🧑 Employee Info Section -->
+            <div class="w-full bg-gray-100 border border-gray-300 rounded-xl p-5 space-y-4">
+                <div class="flex items-center gap-4">
+                    <img id="editEmpPhoto" src="" alt="Profile"
+                        class="w-16 h-16 rounded-full border object-cover bg-white" />
+                    <div>
+                        <h3 id="editEmpName" class="text-lg font-semibold text-gray-900">Employee Name</h3>
+                        <p id="editEmpEmail" class="text-sm text-gray-700">Email</p>
+                        <p id="editEmpMeta" class="text-sm text-gray-600">Dept • Designation • Joined: Date</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 🔖 Section Label -->
+            <label class="block text-gray-700 font-medium text-center mt-3">Select the section you want to
+                edit</label>
+            <!-- 🔘 Section Buttons -->
+            <div class="flex flex-wrap justify-center gap-3 mb-6 mt-4">
+                <button type="button"
+                    class="emp-section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleEmpSection('contact')">Contact Info</button>
+                <button type="button"
+                    class="emp-section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleEmpSection('job')">Job Info</button>
+            </div>
+
+            <!-- ✏️ Section Forms -->
+            <form id="editEmployeeSections" class="w-full mb-2">
+                <!-- Hidden input for employee_id -->
+                <input type="hidden" id="employee_id_input" name="employee_id" value="">
+            
+                <!-- 🔹 Contact Info -->
+                <div id="emp-section-contact" class="emp-section hidden">
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-6 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Contact Information</h3>
+            
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="emp_current_email" class="block text-sm font-medium mb-1">Current Email</label>
+                                <input type="email" name="current_email" id="emp_current_email" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter current email" />
+                            </div>
+                            <div>
+                                <label for="emp_current_phone" class="block text-sm font-medium mb-1">Current Phone</label>
+                                <input type="text" name="current_phone" id="emp_current_phone" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter current phone" />
+                            </div>
+                        </div>
+            
+                        <!-- 🔸 Permanent Email & Phone -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="emp_permanent_email" class="block text-sm font-medium mb-1">Permanent Email</label>
+                                <input type="email" name="permanent_email" id="emp_permanent_email" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter permanent email" />
+                            </div>
+                            <div>
+                                <label for="emp_permanent_phone" class="block text-sm font-medium mb-1">Permanent Phone</label>
+                                <input type="text" name="permanent_phone" id="emp_permanent_phone" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter permanent phone" />
+                            </div>
+                        </div>
+            
+                        <!-- 🔻 Address Fields -->
+                        <div>
+                            <label for="emp_current_address" class="block text-sm font-medium mb-1">Current Address</label>
+                            <textarea name="current_address" id="emp_current_address" rows="2" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter current address"></textarea>
+                        </div>
+                        <div>
+                            <label for="emp_permanent_address" class="block text-sm font-medium mb-1">Permanent Address</label>
+                            <textarea name="permanent_address" id="emp_permanent_address" rows="2" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="Enter permanent address"></textarea>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- 🔸 Job Info -->
+                <div id="emp-section-job" class="emp-section hidden">
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-6 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Job Information</h3>
+            
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">New Designation</label>
+                                <input type="text" name="new_designation" id="emp_new_designation" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" placeholder="e.g., Senior Developer" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">New Joining Date</label>
+                                <input type="date" name="new_joining_date" id="emp_new_joining_date" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" />
+                            </div>
+                        </div>
+            
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Department</label>
+                            <select name="department" id="emp_new_department" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2">
+                                {% for dept in department_list %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="flex justify-end gap-4 mt-3">
+                    <button type="button" onclick="closeEditEmployeeModal()" class="bg-gray-300 px-4 py-2 rounded-lg">Cancel</button>
+                    <button type="submit" id="saveEmployeeEditBtn" class="bg-custom text-white px-6 py-2 rounded-lg">Save</button>
+                </div>
+            </form>            
+        </div>
+    </div>
+
+    <!-- ✅ JS to control the modal -->
+    <script>// Reattach listeners after initial page render
+        document.addEventListener("DOMContentLoaded", () => {
+            attachEditListeners();
+            attachDeleteListeners();
+        });
+        
+        let currentEditEmpSection = null;
+
+        function openEditEmployeeModal(btn) {
+            const modal = document.getElementById("editEmployeeModal");
+            modal.classList.remove("hidden");
+
+            // Get the employee data from the button's data attributes
+            const empId = btn.dataset.empId;  // Correct employee_id dynamically passed from the button
+            const name = btn.dataset.name;
+            const email = btn.dataset.email;
+            const department = btn.dataset.department;
+            const designation = btn.dataset.designation;
+            const joinDate = btn.dataset.joining;
+            const profileImg = btn.dataset.image || "default.png";
+
+            // Set the modal header section with employee's basic info
+            document.getElementById("editEmpPhoto").src = `/media/${profileImg}`;
+            document.getElementById("editEmpName").textContent = name;
+            document.getElementById("editEmpEmail").textContent = email;
+            document.getElementById("editEmpMeta").textContent = `${department} • ${designation} • Joined: ${joinDate}`;
+
+            // Set the contact info form fields
+            document.getElementById("emp_current_email").value = btn.dataset.currentEmail || "";
+            document.getElementById("emp_current_phone").value = btn.dataset.currentPhone || "";
+            document.getElementById("emp_permanent_email").value = btn.dataset.permanentEmail || "";
+            document.getElementById("emp_permanent_phone").value = btn.dataset.permanentPhone || "";
+            document.getElementById("emp_current_address").value = btn.dataset.currentAddress || "";
+            document.getElementById("emp_permanent_address").value = btn.dataset.permanentAddress || "";
+
+            // Set the employee_id in the hidden input so it's submitted with the form
+            document.getElementById("employee_id_input").value = empId;
+
+            // Hide other sections and show the relevant section
+            hideAllEmpSections();
+        }
+
+        function closeEditEmployeeModal() {
+            document.getElementById("editEmployeeModal").classList.add("hidden");
+            hideAllEmpSections();
+            currentEditEmpSection = null;
+
+            // ✅ Reset modal width to default
+            const modalBox = document.getElementById("editEmployeeModalBox");
+            modalBox.classList.remove("max-w-4xl");
+            modalBox.classList.add("max-w-xl");
+        }
+
+        function toggleEmpSection(sectionId) {
+            const section = document.getElementById("emp-section-" + sectionId);
+            const modalBox = document.getElementById("editEmployeeModalBox");
+
+            if (section.classList.contains("hidden")) {
+                hideAllEmpSections();
+                section.classList.remove("hidden");
+                modalBox.classList.replace("max-w-xl", "max-w-4xl");
+                currentEditEmpSection = sectionId;
+            } else {
+                section.classList.add("hidden");
+                modalBox.classList.replace("max-w-4xl", "max-w-xl");
+                currentEditEmpSection = null;
+            }
+        }
+
+        function hideAllEmpSections() {
+            document.querySelectorAll(".emp-section").forEach(sec => sec.classList.add("hidden"));
+        }
+        
+    </script>
+
+    <!-- ✨ Modal Animation -->
+    <style>
+        .animate-fade-in {
+            animation: fadeInModal 0.3s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+
+    <!-- ✅ Success Message Dialog -->
+    <div id="successDialog"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">✅ Employee information editted successfully!</span>
+    </div>
+    <!-- ❌ Error Dialog -->
+    <div id="errorDialog"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">❌ Failed to edit employee information. Please try again.</span>
+    </div>
+
+    <script>
+        document.getElementById("saveEmployeeEditBtn").addEventListener("click", function () {
+            const saveBtn = this;
+            const label = saveBtn.textContent;
+            saveBtn.textContent = "Saving...";
+            saveBtn.disabled = true;
+            saveBtn.classList.add("cursor-not-allowed", "opacity-50");
+
+            const form = document.getElementById("editEmployeeSections");
+            const formData = new FormData(form);
+
+            if (currentEditEmpSection) {
+                formData.append("section", currentEditEmpSection);
+            }
+
+            const empId = document.getElementById("employee_id_input").value;
+            formData.append("employee_id", empId); 
+
+            fetch(window.location.href, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data); 
+                if (data.success) {
+                    closeEditEmployeeModal();
+
+                    window.location.reload();
+                    
+                    localStorage.setItem("employeeEditSuccess", "true");
+                } else {
+                    showEditToast("error");
+                    resetSaveButton();
+                }
+            })
+            .catch(err => {
+                console.error("❌ Edit failed:", err);
+                showEditToast("error");
+                resetSaveButton();
+            });
+
+            function resetSaveButton() {
+                saveBtn.textContent = label;
+                saveBtn.disabled = false;
+                saveBtn.classList.remove("cursor-not-allowed", "opacity-50");
+            }
+        });
+
+        // Trigger the toast after the page reload
+        document.addEventListener("DOMContentLoaded", function () {
+            if (localStorage.getItem("employeeEditSuccess") === "true") {
+                showEditToast("success");
+                localStorage.removeItem("employeeEditSuccess");
+            }
+        });
+
+        function showEditToast(type) {
+            const toast = document.getElementById(
+                type === "success" ? "successDialog" : "errorDialog"
+            );
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000); // Toast will be hidden after 3 seconds
+        }
+
+    </script>
+    
+</body>
+
+</html>

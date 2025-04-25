@@ -1,0 +1,426 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'hybrid_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                             <p class="text-sm text-gray-600">Hybrid</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'hybrid_profile' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'hybrid_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'hybrid_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'hybrid_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+                <a href="{% url 'hybrid_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'hybrid_my_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <h1 class="text-2xl font-bold mb-6">Leave Management</h1>
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar-check text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ total_leaves }}</h4>
+                                <p class="text-gray-600">Total Leave Days</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-clock text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ leaves_taken }}</h4>
+                                <p class="text-gray-600">Leaves Taken</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-hourglass-half text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ pending_requests }}</h4>
+                                <p class="text-gray-600">Pending Requests</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-purple-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar text-purple-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-semibold">{{ leave_left }}</h4>
+                                <p class="text-gray-600">Remaining Leaves</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-3">
+                        <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium">Leave History</h3>
+                                <a href="{% url 'hybrid_request_leave' %}"
+                                    class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95">
+                                    <i class="fas fa-plus mr-2"></i>Request Leave
+                                </a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-200">
+                                        <tr class="text-left border-b border-gray-300">
+                                            <th class="px-4 py-3 text-left">Type</th>
+                                            <th class="px-4 py-3 text-left">Start Date</th>
+                                            <th class="px-4 py-3 text-left">End Date</th>
+                                            <th class="px-4 py-3 text-left">Days</th>
+                                            <th class="px-4 py-3 text-left">Status</th>
+                                            <th class="px-4 py-3 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-700">
+                                        {% for leave in leave_list %}
+                                        <tr class="hover:bg-gray-200/50">
+                                            <td class="px-4 py-3">{{ leave.type }}</td>
+                                            <td class="px-4 py-3">{{ leave.start }}</td>
+                                            <td class="px-4 py-3">{{ leave.end }}</td>
+                                            <td class="px-4 py-3">{{ leave.days }}</td>
+                                            <td class="px-4 py-3">
+                                                {% if leave.status == "PENDING" %}
+                                                <span
+                                                    class="px-2 py-1 bg-yellow-500 bg-opacity-20 text-yellow-500 rounded-full text-sm">Pending</span>
+                                                {% elif leave.status == "APPROVED" %}
+                                                <span
+                                                    class="px-2 py-1 bg-green-500 bg-opacity-20 text-green-500 rounded-full text-sm">Approved</span>
+                                                {% elif leave.status == "REJECTED" %}
+                                                <span
+                                                    class="px-2 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded-full text-sm">Rejected</span>
+                                                {% elif leave.status == "CANCELLED" %}
+                                                <span
+                                                    class="px-2 py-1 bg-gray-500 bg-opacity-20 text-gray-500 rounded-full text-sm">Cancelled</span>
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="px-4 py-3 text-left">
+                                                {% if leave.status == "PENDING" %}
+                                                <button onclick="openCancelModal('{{ leave.leave_id }}')"
+                                                    class="px-2 py-1 text-red-400 hover:text-red-600 bg-red-400/10 hover:bg-red-600/20 rounded"
+                                                    title="Cancel Leave">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+
+                                                {% else %}
+                                                <button data-url="{% url 'hybrid_download_leave_pdf' leave.leave_id %}"
+                                                    onclick="downloadLeavePDF(this.dataset.url)"
+                                                    class="download-button px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded"
+                                                    title="Download PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="px-4 py-4 text-center text-gray-500">No leave records
+                                                found.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <div class="mt-6 flex items-center justify-between">
+                                    <div class="text-gray-600 mt-2">
+                                        Showing {{ start_index }} to {{ end_index }} of {{ total_count }} entries
+                                    </div>
+                                    {% if page_obj.paginator.num_pages > 1 %}
+                                    <div class="flex space-x-2 pagination">
+                                        {% if page_obj.has_previous %}
+                                        <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}"
+                                            class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+                                        {% endif %}
+
+                                        {% for num in page_obj.paginator.page_range %}
+                                        <a href="?page={{ num }}&q={{ request.GET.q }}"
+                                            class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
+                                            {{ num }}
+                                        </a>
+                                        {% endfor %}
+
+                                        {% if page_obj.has_next %}
+                                        <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}"
+                                            class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div><!-- Cancel Leave Confirmation Modal -->
+    <div id="cancelLeaveModal"
+        class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-lg animate-fade-in">
+            <button onclick="closeCancelModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            <h3 class="text-xl font-semibold mb-4 text-center text-red-600">Confirm Cancellation</h3>
+            <p class="text-center text-gray-700 mb-6">Are you sure you want to cancel this leave request?</p>
+
+            <form id="cancelLeaveForm" method="POST" action="{% url 'hybrid_cancel_leave_request' %}">
+                {% csrf_token %}
+                <input type="hidden" name="leave_id" id="leave_id_field">
+                <div class="flex justify-between gap-4">
+                    <button type="button" onclick="closeCancelModal()"
+                        class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 rounded-lg">No</button>
+                    <button type="submit" class="w-1/2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg">Yes,
+                        Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function openCancelModal(leaveId) {
+            const modal = document.getElementById("cancelLeaveModal");
+            const form = document.getElementById("cancelLeaveForm");
+            const leaveInput = document.getElementById("leave_id_field");
+
+            if (modal && form && leaveInput) {
+                leaveInput.value = leaveId;
+                modal.classList.remove("hidden");
+            } else {
+                console.error("Modal or form not found.");
+            }
+        }
+
+        function closeCancelModal() {
+            const modal = document.getElementById("cancelLeaveModal");
+            if (modal) {
+                modal.classList.add("hidden");
+            }
+        }
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const status = localStorage.getItem("leaveRequestStatus");
+
+            if (status === "success") {
+                const dialog = document.getElementById("leaveSuccessDialog");
+                dialog.classList.remove("hidden");
+
+                setTimeout(() => {
+                    dialog.classList.add("hidden");
+                    localStorage.removeItem("leaveRequestStatus");
+                }, 3000);
+            }
+
+            if (status === "error") {
+                const dialog = document.getElementById("leaveErrorDialog");
+                dialog.classList.remove("hidden");
+
+                setTimeout(() => {
+                    dialog.classList.add("hidden");
+                    localStorage.removeItem("leaveRequestStatus");
+                }, 3000);
+            }
+        });
+
+
+        function cancelLeave(leaveId) {
+            fetch("{% url 'hybrid_cancel_leave_request' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: `leave_id=${leaveId}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem("leaveCancelStatus", "success");
+                    } else {
+                        localStorage.setItem("leaveCancelStatus", "error");
+                    }
+                    location.reload();
+                })
+                .catch(err => {
+                    localStorage.setItem("leaveCancelStatus", "error");
+                    location.reload();
+                });
+        }
+
+        function downloadLeavePDF(downloadUrl) {
+            const loading = document.getElementById("pdfDownloadLoading");
+            const success = document.getElementById("pdfDownloadSuccessDialog");
+            const error = document.getElementById("pdfDownloadErrorDialog");
+
+            loading.classList.remove("hidden");
+
+            fetch(downloadUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error("Download failed");
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = downloadUrl.split('/').pop() + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    loading.classList.add("hidden");
+                    success.classList.remove("hidden");
+                    setTimeout(() => success.classList.add("hidden"), 3000);
+                })
+                .catch(err => {
+                    loading.classList.add("hidden");
+                    error.classList.remove("hidden");
+                    setTimeout(() => error.classList.add("hidden"), 3000);
+                });
+        }
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+
+            const cancelStatus = getCookie("leaveCancelStatus");
+
+            if (cancelStatus === "success") {
+                const dialog = document.getElementById("cancelSuccessDialog");
+                dialog.classList.remove("hidden");
+                setTimeout(() => dialog.classList.add("hidden"), 3000);
+                document.cookie = "leaveCancelStatus=; Max-Age=0";  // clear cookie
+            }
+
+            if (cancelStatus === "error") {
+                const dialog = document.getElementById("cancelErrorDialog");
+                dialog.classList.remove("hidden");
+                setTimeout(() => dialog.classList.add("hidden"), 3000);
+                document.cookie = "leaveCancelStatus=; Max-Age=0";  // clear cookie
+            }
+        });
+    </script>
+    <!-- ✅ Success Dialog -->
+    <div id="leaveSuccessDialog"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Leave request submitted successfully!
+    </div>
+
+    <!-- ❌ Error Dialog -->
+    <div id="leaveErrorDialog"
+        class="fixed bottom-6 right-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to submit leave request. Please try again.
+    </div>
+
+    <!-- ✅ Cancel Success -->
+    <div id="cancelSuccessDialog"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Leave request cancelled successfully!
+    </div>
+
+    <!-- ❌ Cancel Error -->
+    <div id="cancelErrorDialog"
+        class="fixed bottom-6 right-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to cancel leave request. Please try again.
+    </div>
+    <!-- ⏳ Loading Bar -->
+    <div id="pdfDownloadLoading"
+        class="fixed bottom-6 right-6 bg-gray-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+        ⏳ Preparing your leave letter...
+    </div>
+
+    <!-- ✅ Success Toast -->
+    <div id="pdfDownloadSuccessDialog"
+        class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Leave PDF downloaded successfully!
+    </div>
+
+    <!-- ❌ Error Toast -->
+    <div id="pdfDownloadErrorDialog"
+        class="fixed bottom-6 right-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to download Leave PDF. Please try again.
+    </div>
+
+</body>

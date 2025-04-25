@@ -1,0 +1,1098 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'office_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">Office Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'office_profile' %}" class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'office_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'office_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'office_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+                <a href="{% url 'office_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'office_my_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h1 class="text-3xl font-bold">Profile</h1>
+                    <button type="submit" id="submitBtn" onclick="openEditProfileModal()"
+                        class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-700 active:transform active:scale-95 transition-all duration-200">
+                        Edit Profile
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-5">
+                    <div class="col-span-2 bg-gray-100 p-6 rounded-lg mt-2">
+                        {% csrf_token %}
+                        <h2 class="text-xl font-semibold mb-2 text-gray-900">Personal Information</h2>
+                        <hr class="border-gray-300 mt-2 mb-2">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="flex flex-col items-center">
+                                <!-- Profile Image -->
+                                <img id="profilePreview" src="/media/{{ profile_image }}" alt="Profile"
+                                    class="w-48 h-48 rounded-full" />
+
+                                <!-- Change Profile Button -->
+                                <button id="openModalBtn"
+                                    class="mt-3 px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/30 hover:bg-blue-600/40 rounded">
+                                    <i class="fas fa-edit"></i></button>
+                            </div>
+
+                            <!-- Profile Photo Upload Modal -->
+                            <div id="profileModal"
+                                class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden">
+                                <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+                                    <!-- Centered Heading -->
+                                    <h2 class="text-lg font-bold text-gray-800 text-center mb-4">Change Profile Photo
+                                    </h2>
+
+                                    <!-- Square Image Preview (larger) -->
+                                    <div class="flex justify-center mb-4">
+                                        <img id="modalProfilePreview" src="/media/{{ profile_image }}" alt="Profile"
+                                            class="w-80 h-80 object-cover border border-gray-300" />
+                                    </div>
+
+                                    <!-- File Input -->
+                                    <input type="file" id="profileImageUpload" accept="image/png, image/jpeg, image/jpg"
+                                        class="ml-1 mb-4 block mx-auto">
+
+                                    <!-- Buttons -->
+                                    <div class="flex justify-between">
+                                        <!-- Save Button with Spinner -->
+                                        <button id="saveProfileBtn" disabled
+                                            class="w-1/2 mr-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded flex justify-center items-center opacity-50 cursor-not-allowed">
+                                            <span class="btn-label">Save</span>
+                                            <span
+                                                class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                        </button>
+
+                                        <!-- Cancel Button -->
+                                        <button id="closeModalBtn"
+                                            class="w-1/2 ml-2 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded flex justify-center items-center">
+                                            Cancel
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                            <div class="col-span-2">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Full Name :
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label id="fullName" class="block text-base font-semibold text-gray-800">
+                                            {{ full_name }}</label>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Current Phone No. :
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label id="currentPhone" class="block text-base font-semibold text-gray-800">
+                                            {{ current_phone }}</label>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Gender :
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2 ">
+                                        <label id="gender" class="block text-base font-semibold text-gray-800">
+                                            {{ gender }}</label>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Current Email :
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2 ">
+                                        <label id="currentEmail" class="block text-base font-semibold text-gray-800">
+                                            {{ current_email }}</label>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Date of Birth :
+                                        </label>
+                                    </div>
+                                    <div class="space-y-2 ">
+                                        <label id="dateOfBirth" class="block text-base font-semibold text-gray-800">
+                                            {{ date_of_birth }}</label>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Current Address :</label>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label id="currentAddress" class="block text-base font-semibold text-gray-800">
+                                            {{ current_address }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-5">
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mt-2 text-gray-900">Academic Information</h2>
+                        <hr class="border-gray-300 mt-2 mb-2">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Highest Degree :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="highestDegree" class="block text-base font-semibold text-gray-800">
+                                    {{ degree }}</label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Passing Year :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="passingYear" class="block text-base font-semibold text-gray-800">
+                                    {{ passing_year }}</label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Board/University :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="boardUniversity" class="block text-base font-semibold text-gray-800">
+                                    {{ board_university }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mt-2 text-gray-900">Current Job Information</h2>
+                        <hr class="border-gray-300 mt-2 mb-2">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Date Of Joining :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="dateOfJoining" class="block text-base font-semibold text-gray-800">
+                                    {{ joining_date }}</label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Designation :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="designation" class="block text-base font-semibold text-gray-800">
+                                    {{ designation }}</label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Previous Company Name :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="companyName" class="block text-base font-semibold text-gray-800">
+                                    {{ company_name }}</label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Previous Designation :
+                                </label>
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label id="designationEH" class="block text-base font-semibold text-gray-800">
+                                    {{ old_designation }}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- 🌟 EDIT PROFILE MODAL -->
+    <div id="editProfileModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="editProfileModalBox"
+            class="bg-white rounded-xl shadow-xl w-full max-w-xl min-h-[250px] max-h-[95vh] overflow-y-auto relative animate-fade-in px-6 py-8 flex flex-col justify-start items-center transition-all duration-300">
+
+            <!-- 🔘 Close Button -->
+            <button onclick="closeEditProfileModal()"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+
+            <!-- 🧾 Modal Title -->
+            <h2 class="text-3xl font-bold mb-4 text-custom text-center">Edit Profile</h2>
+
+            <!-- 🔖 Section Label -->
+            <label class="block text-gray-700 font-medium text-center mb-3">Select the section you want to
+                update</label>
+
+            <!-- 🔄 Section Selector -->
+            <div class="flex flex-wrap justify-center gap-3 mb-6">
+                <button type="button"
+                    class="section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleSection('contact')">Contact Info</button>
+                <button type="button"
+                    class="section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleSection('academic')">Academic Info</button>
+                <button type="button"
+                    class="section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleSection('reference')">References</button>
+                <button type="button"
+                    class="section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleSection('documents')">Documents</button>
+                {% if gender|lower == "female" %}
+                <button type="button"
+                    class="section-btn bg-custom/10 text-custom hover:bg-custom/20 px-4 py-2 rounded-md text-sm font-medium"
+                    onclick="toggleSection('middleName')">Change Middle Name</button>
+                {% endif %}
+            </div>
+
+            <!-- 🔽 Section Container -->
+            <form method="POST" enctype="multipart/form-data" action="{% url 'office_profile' %}" class="w-full space-y-8 "
+                id="editProfileSections">
+                {% csrf_token %}
+
+                <!-- Each Section will be injected here -->
+                <div id="section-contact" class="profile-section hidden"><!-- 🔹 Contact Info Section -->
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-6 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Contact Information</h3>
+
+                        <!-- 🔹 Current Email & Phone -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="current_email" class="block text-sm font-medium text-gray-900 mb-1">Current
+                                    Email</label>
+                                <input type="email" id="current_email" name="current_email"
+                                    value="{{ edit_data.current_email }}" required
+                                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                    placeholder="Enter current email" />
+                                <p id="emailWarningCurrent" class="text-red-500 text-sm hidden">Invalid
+                                    email format!
+                                </p>
+                            </div>
+                            <div>
+                                <label for="current_phone" class="block text-sm font-medium text-gray-900 mb-1">Current
+                                    Phone</label>
+                                <input type="text" id="current_phone" name="current_phone"
+                                    value="{{ edit_data.current_phone }}" required pattern="[0-9]{10,15}"
+                                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                    placeholder="Enter current phone number" />
+                                <p id="phoneWarningCurrent" class="text-red-500 text-sm hidden">Only numbers
+                                    are allowed!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 🔸 Permanent Email & Phone -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="permanent_email"
+                                    class="block text-sm font-medium text-gray-900 mb-1">Permanent Email</label>
+                                <input type="email" id="permanent_email" name="permanent_email"
+                                    value="{{ edit_data.permanent_email }}"
+                                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                    placeholder="Enter permanent email" />
+                                <p id="emailWarningPermanent" class="text-red-500 text-sm hidden">Invalid
+                                    email format!
+                                </p>
+                            </div>
+                            <div>
+                                <label for="permanent_phone"
+                                    class="block text-sm font-medium text-gray-900 mb-1">Permanent Phone</label>
+                                <input type="text" id="permanent_phone" name="permanent_phone"
+                                    value="{{ edit_data.permanent_phone }}" pattern="[0-9]{10,15}"
+                                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                    placeholder="Enter permanent phone number" />
+                                <p id="phoneWarningPermanent" class="text-red-500 text-sm hidden">Only numbers
+                                    are allowed!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 🔻 Address Fields -->
+                        <div>
+                            <label for="current_address" class="block text-sm font-medium text-gray-900 mb-1">Current
+                                Address</label>
+                            <textarea id="current_address" name="current_address" rows="2" required
+                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                placeholder="Enter current address">{{ edit_data.current_address }}</textarea>
+                            <p id="addressWarningCurrent" class="text-red-500 text-sm hidden"></p>
+                        </div>
+
+                        <div>
+                            <label for="permanent_address"
+                                class="block text-sm font-medium text-gray-900 mb-1">Permanent Address</label>
+                            <textarea id="permanent_address" name="permanent_address" rows="2"
+                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                placeholder="Enter permanent address">{{ edit_data.permanent_address }}</textarea>
+                            <p id="addressWarningPermanent" class="text-red-500 text-sm hidden"></p>
+                        </div>
+                    </div>
+
+                </div>
+                <div id="section-academic" class="profile-section hidden">
+                    <!-- 🔸 Academic Info -->
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-5 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Academic Information</h3>
+
+                        {% if degree %}
+                        <div class="text-sm text-gray-800 bg-white border border-gray-300 rounded-lg p-4">
+                            <p><strong>Degree:</strong> {{ edit_data.degree }}</p>
+                            <p><strong>Passing Year:</strong> {{ edit_data.passing_year }}</p>
+                            <p><strong>Board/University:</strong> {{ edit_data.board_university }}</p>
+                        </div>
+                        {% endif %}
+
+                        <button type="button" id="toggleAcademicBtn" onclick="toggleAcademicForm()"
+                            class="bg-custom text-white px-4 py-2 rounded hover:bg-custom/90 text-sm font-medium">
+                            Update Academic Info
+                        </button>
+
+                        <div id="academicForm" class="space-y-4 hidden">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label for="degree"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Degree</label>
+                                    <input type="text" name="degree" id="degree"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="e.g., MBA, B.Tech" />
+                                </div>
+                                <div>
+                                    <label for="passing_year"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Passing
+                                        Year</label>
+                                    <input type="number" name="passing_year" id="passing_year"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="e.g., 2024" />
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label for="board_university"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Board/University</label>
+                                    <input type="text" name="board_university" id="board_university"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="e.g., MIT, Delhi University" />
+                                </div>
+                                <div>
+                                    <label for="grade" class="block text-sm font-medium text-gray-900 mb-1">Grade / CGPA
+                                        (Optional)</label>
+                                    <input type="text" name="grade" id="grade"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="e.g., 9.2 CGPA" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        function toggleAcademicForm() {
+                            const form = document.getElementById("academicForm");
+                            const button = document.getElementById("toggleAcademicBtn");
+                            form.classList.toggle("hidden");
+                            button.textContent = form.classList.contains("hidden") ? "Update Academic Info" : "Cancel";
+                        }
+                    </script>
+
+                </div>
+                <div id="section-reference" class="profile-section hidden">
+                    <!-- 🔹 References -->
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-4 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">References</h3>
+
+                        {% if edit_data.has_references %}
+                        <!-- 🟢 Display Existing References -->
+                        <div class="grid grid-cols-2 gap-6">
+                            {% for ref in edit_data.references %}
+                            <div class="bg-white border border-gray-300 rounded-lg p-4 text-sm text-gray-800">
+                                <p><strong>Name:</strong> {{ ref.reference_name }}</p>
+                                <p><strong>Contact:</strong> {{ ref.reference_contact }}</p>
+                                <p><strong>Email:</strong> {{ ref.reference_email }}</p>
+                                <p><strong>Relationship:</strong> {{ ref.relationship }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- 🔒 Message -->
+                        <div class="text-sm text-gray-600 italic">
+                            References already added. You cannot add or update them here.
+                        </div>
+
+                        {% else %}
+                        <!-- 🟡 No References Yet -->
+                        <div class="text-sm text-gray-600 italic">No references added yet.</div>
+
+                        <!-- ➕ Add Reference Button -->
+                        <button type="button" id="toggleRefBtn" onclick="toggleReferenceForm()"
+                            class="bg-custom text-white px-4 py-2 rounded hover:bg-custom/90 text-sm font-medium">
+                            Add Reference
+                        </button>
+
+                        <!-- 📄 Add Reference Form -->
+                        <div id="referenceForm" class="space-y-4 hidden">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label for="reference_name"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Reference Name</label>
+                                    <input type="text" name="reference_name" id="reference_name"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="e.g., John Doe" />
+                                </div>
+                                <div>
+                                    <label for="reference_phone"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Contact</label>
+                                    <input type="text" name="reference_phone" id="reference_phone"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="Phone Number" />
+                                    <p id="phoneWarningReference" class="text-red-500 text-sm hidden">Only numbers
+                                        are allowed!
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label for="reference_email"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Email</label>
+                                    <input type="email" name="reference_email" id="reference_email"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                        placeholder="Email ID" />
+                                    <p id="emailWarningReference" class="text-red-500 text-sm hidden">Invalid
+                                        email format!
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="reference_relation"
+                                        class="block text-sm font-medium text-gray-900 mb-1">Relationship</label>
+                                    <select required name="reference_relation" id="reference_relation"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent">
+                                        <option>Professional</option>
+                                        <option>Personal</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <script>
+                        function toggleReferenceForm() {
+                            const form = document.getElementById("referenceForm");
+                            const btn = document.getElementById("toggleRefBtn");
+                            form.classList.toggle("hidden");
+                            btn.textContent = form.classList.contains("hidden") ? "Add Reference" : "Cancel";
+                        }
+                    </script>
+                </div>
+                <div id="section-documents" class="profile-section hidden"><!-- 📄 Document Upload Section -->
+                    <div class="bg-gray-100 rounded-xl px-6 py-5  border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Document Uploads</h3>
+
+                        {% if edit_data.has_passport and not edit_data.passport_expiring and edit_data.has_sin and not edit_data.sin_expiring and edit_data.has_work_permit and not edit_data.work_permit_expiring and edit_data.has_license and not edit_data.license_expiring %}
+                        <div class="text-sm text-green-700 bg-green-100 border border-green-300 rounded p-3">
+                            ✅ All documents are up to date. You will be notified if any updates are required.
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            {% if not edit_data.has_passport or edit_data.passport_expiring %}
+                            <div class="bg-white border border-gray-300 rounded-lg p-4 space-y-4 mb-5">
+                                <h4 class="text-md font-semibold text-gray-800 mb-1">Passport Document</h4>
+
+                                {% if edit_data.passport_expiring %}
+                                <p class="text-sm text-red-600">(Expiring Soon – Please re-upload and update expiry
+                                    date)</p>
+                                {% endif %}
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="passport_number"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
+                                        <input type="text" id="passport_number" name="passport_number"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            placeholder="e.g., L1234567" required>
+                                    </div>
+                                    <!-- File Upload -->
+                                    <div>
+                                        <label for="passport_document"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Upload Passport (PDF
+                                            Only)</label>
+                                        <div class="w-full bg-white border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                     focus-within:ring-custom focus-within:border-custom">
+                                            <input type="file" name="passport_document" id="passport_document"
+                                                accept=".pdf" class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Issue Date -->
+                                    <div>
+                                        <label for="passport_issue_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Issue Date</label>
+                                        <input type="date" id="passport_issue_date" name="passport_issue_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="passport_expiry_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Expiry Date</label>
+                                        <input type="date" id="passport_expiry_date" name="passport_expiry_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+
+                            {% if not edit_data.has_sin or edit_data.sin_expiring %}
+                            <div class="bg-white border border-gray-300 rounded-lg p-4 space-y-4 mb-5">
+                                <h4 class="text-md font-semibold text-gray-800 mb-1">SIN Certificate</h4>
+
+                                {% if edit_data.sin_expiring %}
+                                <p class="text-sm text-red-600">(Expiring Soon – Please re-upload and update expiry
+                                    date)</p>
+                                {% endif %}
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- SIN Number -->
+                                    <div>
+                                        <label for="sin_number" class="block text-sm font-medium text-gray-700 mb-1">SIN
+                                            Number</label>
+                                        <input type="text" id="sin_number" name="sin_number"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            placeholder="e.g., 123456789" required>
+                                    </div>
+                                    <!-- File Upload -->
+                                    <div>
+                                        <label for="sin_document"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Upload SIN (PDF
+                                            Only)</label>
+                                        <div
+                                            class="w-full bg-white border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 focus-within:ring-custom focus-within:border-custom">
+                                            <input type="file" name="sin_document" id="sin_document" accept=".pdf"
+                                                class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                             file:rounded-lg file:cursor-pointer focus:outline-none" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="sin_issue_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Issue Date</label>
+                                        <input type="date" id="sin_issue_date" name="sin_issue_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="sin_expiry_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Expiry Date</label>
+                                        <input type="date" id="sin_expiry_date" name="sin_expiry_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+
+                            {% if not edit_data.has_work_permit or edit_data.work_permit_expiring %}
+                            <div class="bg-white border border-gray-300 rounded-lg p-4 space-y-4 mb-5">
+                                <h4 class="text-md font-semibold text-gray-800 mb-1">Work Permit / PR</h4>
+
+                                {% if edit_data.work_permit_expiring %}
+                                <p class="text-sm text-red-600">(Expiring Soon – Please re-upload and update details)
+                                </p>
+                                {% endif %}
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Permit Number -->
+                                    <div>
+                                        <label for="work_permit_number"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Permit Number</label>
+                                        <input type="text" id="work_permit_number" name="work_permit_number"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            placeholder="e.g., WP-1234567" required>
+                                    </div>
+
+                                    <!-- File Upload -->
+                                    <div>
+                                        <label for="work_permit_document"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Upload Work Permit (PDF
+                                            Only)</label>
+                                        <div class="w-full bg-white border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                         focus-within:ring-custom focus-within:border-custom">
+                                            <input type="file" name="work_permit_document" id="work_permit_document"
+                                                accept=".pdf" class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                             file:rounded-lg file:cursor-pointer focus:outline-none" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Issue Date -->
+                                    <div>
+                                        <label for="work_permit_issue_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Issue Date</label>
+                                        <input type="date" id="work_permit_issue_date" name="work_permit_issue_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="work_permit_expiry_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Expiry Date</label>
+                                        <input type="date" id="work_permit_expiry_date" name="work_permit_expiry_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+
+
+                            {% if not edit_data.has_license or edit_data.license_expiring %}
+                            <div class="bg-white border border-gray-300 rounded-lg p-4 space-y-4 mb-5">
+                                <h4 class="text-md font-semibold text-gray-800 mb-1">Driving License</h4>
+
+                                {% if edit_data.license_expiring %}
+                                <p class="text-sm text-red-600">(Expiring Soon – Please re-upload and update details)
+                                </p>
+                                {% endif %}
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- License Number -->
+                                    <div>
+                                        <label for="license_number"
+                                            class="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+                                        <input type="text" id="license_number" name="license_number"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            placeholder="e.g., DL-0920130012345" required>
+                                    </div>
+
+                                    <!-- File Upload -->
+                                    <div>
+                                        <label for="driving_license_document"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Upload License (PDF
+                                            Only)</label>
+                                        <div class="w-full bg-white border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                         focus-within:ring-custom focus-within:border-custom">
+                                            <input type="file" name="driving_license_document"
+                                                id="driving_license_document" accept=".pdf" class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                             file:rounded-lg file:cursor-pointer focus:outline-none" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Issue Date -->
+                                    <div>
+                                        <label for="license_issue_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Issue Date</label>
+                                        <input type="date" id="license_issue_date" name="license_issue_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+
+                                    <!-- Expiry Date -->
+                                    <div>
+                                        <label for="license_expiry_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">New Expiry Date</label>
+                                        <input type="date" id="license_expiry_date" name="license_expiry_date"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                            required>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div id="section-middleName" class="profile-section hidden"><!-- 🔸 Middle Name Update -->
+                    <div class="bg-gray-100 rounded-xl px-6 py-5 space-y-4 border border-gray-300">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Update Middle Name</h3>
+
+                        <div>
+                            <label for="middle_name" class="block text-sm font-medium text-gray-900 mb-1">Middle
+                                Name</label>
+                            <input type="text" name="middle_name" id="middle_name"
+                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"
+                                placeholder="Enter new middle name (if changed after marriage)" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-4 mt-6">
+                    <button type="button" onclick="closeEditProfileModal()"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg">Cancel</button>
+                    <button id="saveEditProfileBtn" type="button"
+                        class="bg-custom hover:bg-custom/90 text-white py-2 px-6 rounded-lg flex items-center justify-center">
+                        <span class="btn-label">Save</span>
+                        <span
+                            class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        let currentEditSection = null; // ✅ Global tracker for which section is open
+
+        function openEditProfileModal() {
+            document.getElementById("editProfileModal").classList.remove("hidden");
+            document.getElementById("editProfileSections").classList.add("hidden");
+            hideAllSections();
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById("editProfileModal").classList.add("hidden");
+            document.getElementById("editProfileSections").classList.add("hidden");
+            hideAllSections();
+        }
+
+        document.getElementById("saveEditProfileBtn").addEventListener("click", function () {
+            const saveBtn = document.getElementById("saveEditProfileBtn");
+            const label = saveBtn.querySelector(".btn-label");
+            const spinner = saveBtn.querySelector(".spinner");
+
+            // UI Feedback
+            label.textContent = "Saving...";
+            spinner.classList.remove("hidden");
+            saveBtn.disabled = true;
+            saveBtn.classList.add("cursor-not-allowed", "opacity-50");
+
+            const form = document.getElementById("editProfileSections");
+            const formData = new FormData(form);
+
+            // ✅ Append current section flag to FormData
+            if (currentEditSection) {
+                // ✅ Intelligent section detection (for documents)
+                let sectionToSend = currentEditSection;
+
+                if (currentEditSection === "documents") {
+                    if (document.getElementById("passport_number")?.value) sectionToSend = "passport";
+                    else if (document.getElementById("sin_number")?.value) sectionToSend = "sin";
+                    else if (document.getElementById("work_permit_number")?.value) sectionToSend = "permit";
+                    else if (document.getElementById("license_number")?.value) sectionToSend = "license";
+                }
+
+                formData.append("section", sectionToSend);
+                console.log("🟢 Submitting section:", sectionToSend);
+                console.log("🔹 Submitting section:", currentEditSection);
+            }
+
+            fetch("{% url 'office_profile' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+                .then(response => {
+                    if (response.redirected) {
+                        localStorage.setItem("profileInfoUpdated", "true");
+                        window.location.href = response.url;
+                    } else {
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    if (data && data.success === false) {
+                        resetProfileInfoSaveBtn(true);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error saving profile:", error);
+                    resetProfileInfoSaveBtn(true);
+                });
+
+            function resetProfileInfoSaveBtn(showError = false) {
+                label.textContent = "Save";
+                spinner.classList.add("hidden");
+                saveBtn.disabled = false;
+                saveBtn.classList.remove("cursor-not-allowed", "opacity-50");
+
+                if (showError) {
+                    const errorDialog = document.getElementById("errorDialogS");
+                    if (errorDialog) {
+                        errorDialog.classList.remove("hidden");
+                        setTimeout(() => {
+                            errorDialog.classList.add("hidden");
+                        }, 3000);
+                    }
+                }
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (localStorage.getItem("profileInfoUpdated") === "true") {
+                const dialog = document.getElementById("successDialogS");
+                dialog.classList.remove("hidden");
+
+                setTimeout(() => {
+                    dialog.classList.add("hidden");
+                    localStorage.removeItem("profileInfoUpdated");
+                }, 3000);
+            }
+        });
+
+        function toggleSection(sectionId) {
+            const sectionForm = document.getElementById("editProfileSections");
+            const section = document.getElementById("section-" + sectionId);
+            const modalBox = document.getElementById("editProfileModalBox");
+
+            if (section.classList.contains("hidden")) {
+                hideAllSections();
+                section.classList.remove("hidden");
+                sectionForm.classList.remove("hidden");
+
+                modalBox.classList.remove("max-w-xl");
+                modalBox.classList.add("max-w-4xl");
+
+                // ✅ Track active section
+                currentEditSection = sectionId;
+                console.log("🟢 Current active section:", currentEditSection);
+            } else {
+                section.classList.add("hidden");
+                sectionForm.classList.add("hidden");
+
+                modalBox.classList.remove("max-w-4xl");
+                modalBox.classList.add("max-w-xl");
+
+                // ✅ Clear section tracker
+                currentEditSection = null;
+            }
+        }
+
+        function hideAllSections() {
+            const all = document.querySelectorAll(".profile-section");
+            all.forEach(sec => sec.classList.add("hidden"));
+        }
+    </script>
+
+
+    <!-- Styles -->
+    <style>
+        .animate-fade-in {
+            animation: fadeInModal 0.3s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+    <script>
+        // Open modal
+        document.getElementById("openModalBtn").addEventListener("click", function () {
+            document.getElementById("profileModal").classList.remove("hidden");
+        });
+
+        // Close modal
+        document.getElementById("closeModalBtn").addEventListener("click", function () {
+            document.getElementById("profileModal").classList.add("hidden");
+        });
+
+        // Enable Save button + preview selected image
+        document.getElementById("profileImageUpload").addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById("modalProfilePreview").src = e.target.result;
+
+                    const saveBtn = document.getElementById("saveProfileBtn");
+                    saveBtn.disabled = false;
+                    saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Save image via AJAX
+        document.getElementById("saveProfileBtn").addEventListener("click", function () {
+            const saveBtn = document.getElementById("saveProfileBtn");
+            const label = saveBtn.querySelector(".btn-label");
+            const spinner = saveBtn.querySelector(".spinner");
+
+            const formData = new FormData();
+            const fileInput = document.getElementById("profileImageUpload");
+
+            if (fileInput.files.length > 0) {
+                // UI feedback: show spinner & disable button
+                label.textContent = "Saving...";
+                spinner.classList.remove("hidden");
+                saveBtn.disabled = true;
+                saveBtn.classList.add("cursor-not-allowed", "opacity-50");
+
+                formData.append("profile_image", fileInput.files[0]);
+
+                fetch("{% url 'office_profile' %}", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // ✅ Store success flag in localStorage before reload
+                            localStorage.setItem("profileUpdated", "true");
+
+                            // ✅ Reload page to reflect changes
+                            location.reload();
+                        } else {
+                            resetSaveButton(true);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        resetSaveButton(true);
+                    });
+            }
+
+            function resetSaveButton(showError = false) {
+                label.textContent = "Save";
+                spinner.classList.add("hidden");
+                saveBtn.disabled = false;
+                saveBtn.classList.remove("cursor-not-allowed", "opacity-50");
+
+                if (showError) {
+                    const errorDialog = document.getElementById("errorDialog");
+                    errorDialog.classList.remove("hidden");
+                    setTimeout(() => {
+                        errorDialog.classList.add("hidden");
+                    }, 3000);
+                }
+            }
+        });
+
+        // ✅ Show success message AFTER page reload if profile was updated
+        document.addEventListener("DOMContentLoaded", function () {
+            if (localStorage.getItem("profileUpdated") === "true") {
+                // ✅ Show success message
+                const dialog = document.getElementById("successDialog");
+                dialog.classList.remove("hidden");
+
+                // ✅ Hide success message after 3 seconds
+                setTimeout(() => {
+                    dialog.classList.add("hidden");
+                    // ✅ Remove flag from localStorage so it doesn't show again
+                    localStorage.removeItem("profileUpdated");
+                }, 3000);
+            }
+        });
+    </script>
+
+    <!-- ✅ Success Message Dialog -->
+    <div id="successDialog"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">✅ Profile photo updated successfully!</span>
+    </div>
+    <!-- ❌ Error Dialog -->
+    <div id="errorDialog"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">❌ Failed to update profile photo. Please try again.</span>
+    </div>
+    <!-- ✅ Success Message Dialog -->
+    <div id="successDialogS"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">✅ Profile updated successfully!</span>
+    </div>
+    <!-- ❌ Error Dialog -->
+    <div id="errorDialogS"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <span class="font-semibold">❌ Failed to update profile information. Please try again.</span>
+    </div>
+    
+    <script src="{% static 'js/edit_profile_validation.js' %}"></script>
+</body>

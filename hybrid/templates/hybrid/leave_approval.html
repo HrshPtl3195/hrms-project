@@ -1,0 +1,412 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'hybrid_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                             <p class="text-sm text-gray-600">Hybrid</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'hybrid_profile' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'hybrid_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'hybrid_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'hybrid_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+                <a href="{% url 'hybrid_leave_management' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Management</span>
+                </a>
+                <a href="{% url 'hybrid_my_payroll' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">My Payroll</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <h1 class="text-3xl font-bold mb-6">Leave Approvals</h1>
+                <div class="grid grid-cols-4 gap-6 mb-6">
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-calendar-check text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_leaves }}</h4>
+                                <p class="text-gray-600">Total Leaves</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-clock text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_pending_leaves }}</h4>
+                                <p class="text-gray-600">Pending Requests</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_approved_leaves }}</h4>
+                                <p class="text-gray-600">Approved</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-red-500 bg-opacity-20 rounded-lg">
+                                <i class="fas fa-times-circle text-red-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-2xl font-bold">{{ total_rejected_leaves }}</h4>
+                                <p class="text-gray-600">Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-3">
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium">Leave Requests</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="openDownloadModal()"
+                                        class="p-2 text-gray-600 hover:text-gray-900 bg-gray-200 hover:bg-gray-400 rounded-full">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-200">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left">
+                                                Employee</th>
+                                            <th class="px-4 py-3 text-left">
+                                                Leave Type</th>
+                                            <th class="px-4 py-3 text-left">
+                                                From</th>
+                                            <th class="px-4 py-3 text-left">
+                                                To</th>
+                                            <th class="px-4 py-3 text-left">
+                                                Status</th>
+                                            <th class="px-4 py-3 text-left">
+                                                Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-700">
+                                        {% for leave in leave_list %}
+                                        <tr class="hover:bg-gray-200/50">
+                                            <td class="px-6 py-3">
+                                                <div class="flex items-center">
+                                                    <img src="/media/{{ leave.profile_image }}"
+                                                        class="w-8 h-8 rounded-full mr-3" />
+                                                    <div>
+                                                        <div class="font-medium">{{ leave.employee_name }}</div>
+                                                        <div class="text-sm text-gray-600">{{ leave.leave_type }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">{{ leave.leave_type }}</td>
+                                            <td class="px-4 py-3">{{ leave.start_date }}</td>
+                                            <td class="px-4 py-3">{{ leave.end_date }}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                                    {% if leave.status == 'PENDING' %} bg-yellow-500 bg-opacity-20 text-yellow-500
+                                                    {% elif leave.status == 'APPROVED' %} bg-green-500 bg-opacity-20 text-green-500
+                                                    {% else %} bg-red-500 bg-opacity-20 text-red-500 {% endif %}">
+                                                    {{ leave.status|title }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex space-x-2">
+                                                    {% if leave.status == "PENDING" %}
+                                                    <button
+                                                        onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.employee_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', '{{ leave.reason }}')"
+                                                        class="p-2 text-green-500 hover:bg-green-500 hover:bg-opacity-20 rounded">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button
+                                                        onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.employee_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', '{{ leave.reason }}')"
+                                                        class="p-2 text-red-500 hover:bg-red-500 hover:bg-opacity-20 rounded">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    {% else %}
+                                                    <span class="text-sm text-gray-400 italic">No action</span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-gray-500">No leave requests
+                                                found.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-6 flex items-center justify-between">
+                                <!-- Pagination Info -->
+                                <div class="text-gray-600 mt-2 pagination-info">
+                                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                                </div>
+                            
+                                <!-- Pagination Buttons -->
+                                {% if page_obj.paginator.num_pages > 1 %}
+                                <div class="flex space-x-2 pagination">
+                                    {% if page_obj.has_previous %}
+                                    <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+                                    {% endif %}
+                            
+                                    {% for num in page_obj.paginator.page_range %}
+                                    <a href="?page={{ num }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                        class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
+                                        {{ num }}
+                                    </a>
+                                    {% endfor %}
+                            
+                                    {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Download Format Modal -->
+    <div id="downloadModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-lg animate-fade-in">
+            <button onclick="closeDownloadModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            <h3 class="text-xl font-semibold mb-4 text-center">Download Leave List</h3>
+            <div class="flex flex-col gap-4">
+                <button onclick="handleDownload('excel')" id="downloadExcelBtn"
+                    class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Download Excel</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+                <button onclick="handleDownload('pdf')" id="downloadPDFBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Download PDF</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Leave Action Modal -->
+    <div id="leaveModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-md mx-auto p-6 relative shadow-xl animate-fade-in">
+            <button onclick="closeModal()"
+                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            <h3 class="text-xl font-semibold mb-4 text-center">Leave Request Details</h3>
+            <div class="space-y-3 text-sm text-gray-700 leading-relaxed">
+                <div>Employee:<strong> <span id="modalEmpName" class="ml-1"></span></strong></div>
+                <div>Leave Type:<strong> <span id="modalType" class="ml-1"></span></strong></div>
+                <div>Start Date:<strong> <span id="modalStart" class="ml-1"></span></strong></div>
+                <div>End Date:<strong> <span id="modalEnd" class="ml-1"></span></strong></div>
+                <div>Reason:<strong> <span id="modalReason" class="ml-1"></span></strong></div>
+            </div>
+            <div class="mt-6 flex justify-between">
+                <button id="approveBtn" onclick="processLeaveAction('APPROVED')"
+                    class="w-1/2 mr-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Approve</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+                <button id="rejectBtn" onclick="processLeaveAction('REJECTED')"
+                    class="w-1/2 ml-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex justify-center items-center">
+                    <span class="btn-label">Reject</span>
+                    <span
+                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Success Toast -->
+    <div id="downloadSuccessToast"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Leave list downloaded successfully!
+    </div>
+
+    <!-- ❌ Error Toast -->
+    <div id="downloadErrorToast"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to download file. Please try again.
+    </div>
+    <!-- ✅ Toast Message -->
+    <script>
+        let selectedLeaveId = null;
+
+        function openLeaveModal(id, name, type, start, end, reason) {
+            selectedLeaveId = id;
+            document.getElementById("modalEmpName").textContent = name;
+            document.getElementById("modalType").textContent = type;
+            document.getElementById("modalStart").textContent = start;
+            document.getElementById("modalEnd").textContent = end;
+            document.getElementById("modalReason").textContent = reason;
+            document.getElementById("leaveModal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("leaveModal").classList.add("hidden");
+        }
+
+        function processLeaveAction(action) {
+            const btn = action === 'APPROVED' ? document.getElementById("approveBtn") : document.getElementById("rejectBtn");
+            btn.querySelector('.btn-label').textContent = "Processing...";
+            btn.querySelector('.spinner').classList.remove("hidden");
+            btn.disabled = true;
+
+            fetch("{% url 'hybrid_leave_action' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: `leave_id=${selectedLeaveId}&action=${action}`
+            })
+                .then(res => res.json())
+                .then(data => {
+                    localStorage.setItem("leaveActionStatus", action);
+                    location.reload();
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const status = localStorage.getItem("leaveActionStatus");
+            if (status) {
+                const toast = document.createElement("div");
+                toast.className = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg z-50 text-white";
+                toast.classList.add(status === "APPROVED" ? "bg-green-300" : "bg-red-300");
+                toast.innerHTML = status === "APPROVED" ? "✅ Leave approved!" : "❌ Leave rejected!";
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                    localStorage.removeItem("leaveActionStatus");
+                }, 3000);
+            }
+        });
+    </script>
+    <script>
+        function openDownloadModal() {
+            document.getElementById("downloadModal").classList.remove("hidden");
+        }
+        function closeDownloadModal() {
+            document.getElementById("downloadModal").classList.add("hidden");
+            ["Excel", "PDF"].forEach(type => {
+                const btn = document.getElementById(`download${type}Btn`);
+                btn.querySelector(".btn-label").textContent = `Download ${type}`;
+                btn.querySelector(".spinner").classList.add("hidden");
+                btn.disabled = false;
+            });
+        }
+        function handleDownload(format) {
+            const url = new URL("{% url 'hr_leave_export' %}", window.location.origin);
+            url.searchParams.append("format", format);
+
+            const buttonId = format === "pdf" ? "downloadPDFBtn" : "downloadExcelBtn";
+            const button = document.getElementById(buttonId);
+            const label = button.querySelector(".btn-label");
+            const spinner = button.querySelector(".spinner");
+
+            label.textContent = "Preparing...";
+            spinner.classList.remove("hidden");
+            button.disabled = true;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Download failed");
+                    return response.blob();
+                })
+                .then(blob => {
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = window.URL.createObjectURL(blob);
+                    downloadLink.download = format === "excel" ? "LeaveRequests.xlsx" : "LeaveRequests.pdf";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    closeDownloadModal();
+                })
+                .catch(error => {
+                    alert("Download failed. Please try again.");
+                    closeDownloadModal();
+                });
+        }
+    </script>
+
+</body>

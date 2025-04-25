@@ -1,0 +1,824 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom.css" rel="stylesheet" />
+    <script
+        src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1">
+        </script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#1B9AF5"
+        data-border-radius="medium">
+        </script>
+</head>
+
+<body class="bg-white text-gray-900 font-[&#39;Inter&#39;]" onload="resetForm();">
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-gray-100 border-r border-gray-300">
+            <div class="p-6">
+                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+            </div>
+            <a href="{% url 'hr_dashboard' %}">
+                <div class="px-4 py-6 border-b border-gray-300">
+                    <div class="flex items-center">
+                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <div class="ml-3">
+                            <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
+                            <p class="text-sm text-gray-600">HR Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <nav class="mt-6">
+                <a href="{% url 'hr_profile' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="ml-3">Profile</span>
+                </a>
+                <a href="{% url 'hr_employee_management' %}"
+                    class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Employee Management</span>
+                </a>
+                <a href="{% url 'hr_leave_approval' %}"
+                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-calendar-check w-5"></i>
+                    <span class="ml-3">Leave Approvals</span>
+                </a>
+                <a href="{% url 'hr_payroll' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Payroll Management</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1">
+            <header class="bg-white border-b border-gray-300">
+                <div class="flex items-center justify-end px-6 h-16">
+                    <div>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="p-2 ml-4 text-gray-400 hover:text-gray-900" id="logout-button"><i
+                                    class="fas fa-sign-out-alt"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+            <div class="p-6">
+                <h1 class="text-3xl font-bold mb-6">Add Employee</h1>
+                <form id="employeeForm" class="space-y-6" action="{% url 'hr_add_employee' %}" method="POST"
+                    enctype="multipart/form-data" autocomplete="off">
+                    {% csrf_token %}
+
+                    <!-- Personal Information -->
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Personal Information</h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">First Name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="firstName" name="firstName"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="nameWarningFirst" class="text-red-500 text-sm hidden"></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Last Name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="lastName" name="lastName"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="nameWarningLast" class="text-red-500 text-sm hidden"></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Middle Name (Father
+                                    or
+                                    Husband)</label>
+                                <input type="text" id="middleName" name="middleName"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="nameWarningMiddle" class="text-red-500 text-sm hidden"></p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2 ">
+                                    <label class="block text-sm font-medium text-gray-600">Gender <span
+                                            class="text-red-500">*</span></label>
+                                    <select required id="gender" name="gender"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom">
+                                        <option>Male</option>
+                                        <option>Female</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-3 ">
+                                    <label class="block text-sm font-medium text-gray-600">Criminal Record <span
+                                            class="text-red-500">*</span></label>
+                                    <div class="flex items-center space-x-4">
+                                        <label for="criminalRecordYes" class="flex items-center">
+                                            <input type="radio" id="criminalRecordYes" name="criminalRecord" value="yes"
+                                                class="form-radio text-blue-500">
+                                            <span class="ml-2">Yes</span>
+                                        </label>
+                                        <label for="criminalRecordNo" class="flex items-center">
+                                            <input type="radio" id="criminalRecordNo" name="criminalRecord" value="no"
+                                                class="form-radio text-blue-500" checked>
+                                            <span class="ml-2">No</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-4 mt-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Date of Birth <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" required id="dateOfBirth" name="dateOfBirth"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Place of Birth <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="placeOfBirth" name="placeOfBirth"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom " />
+                                <p id="POBWarning" class="text-red-500 text-sm hidden"></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Nationality <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="nationality" name="nationality"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="nationalityWarning" class="text-red-500 text-sm hidden"></p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="block text-sm font-medium text-gray-600">User Role <span
+                                        class="text-red-500">*</span></label>
+                                <div class="flex items-center space-x-4">
+                                    <label for="userRoleOA" class="flex items-center">
+                                        <input type="radio" id="userRoleOA" name="userRole" value="OA"
+                                            class="form-radio text-blue-500" checked>
+                                        <span class="ml-2">Office Admin</span>
+                                    </label>
+                                    <label for="userRoleEM" class="flex items-center">
+                                        <input type="radio" id="userRoleEM" name="userRole" value="EM"
+                                            class="form-radio text-blue-500">
+                                        <span class="ml-2">Employee</span>
+                                    </label>
+                                    <label for="userRoleHY" class="flex items-center">
+                                        <input type="radio" id="userRoleHY" name="userRole" value="HY"
+                                            class="form-radio text-blue-500">
+                                        <span class="ml-2">Both</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-4 mt-4">
+                            <!-- Current Phone -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Current Phone Number
+                                    <span class="text-red-500">*</span></label>
+                                <input type="tel" id="currentPhone" required name="currentPhone"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="phoneWarningCurrent" class="text-red-500 text-sm hidden">Only numbers
+                                    are
+                                    allowed!</p>
+                            </div>
+
+                            <!-- Permanent Phone with "Same as Current" Checkbox -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-medium text-gray-600 mr-2">Permanent
+                                        Phone Number <span class="text-red-500">*</span></label>
+                                    <input type="checkbox" id="sameAsCurrentPhone" name="sameAsCurrentPhone"
+                                        class="form-checkbox text-blue-500"
+                                        style="width: 16px; height: 16px; border-radius: 20%;">
+                                    <label for="sameAsCurrentPhone" class="ml-2 text-gray-900 text-sm">Same
+                                        as Current
+                                        Phone</label>
+                                </div>
+                                <input type="tel" id="permanentPhone" name="permanentPhone" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="phoneWarningPermanent" class="text-red-500 text-sm hidden">Only numbers are
+                                    allowed!</p>
+                            </div>
+
+                            <!-- Current Email -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Current Email <span
+                                        class="text-red-500">*</span></label>
+                                <input type="email" id="currentEmail" name="currentEmail" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="emailWarningCurrent" class="text-red-500 text-sm hidden">Invalid
+                                    email format!
+                                </p>
+                            </div>
+
+                            <!-- Permanent Email with "Same as Current" Checkbox -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-medium text-gray-600 mr-2">Permanent
+                                        Email <span class="text-red-500">*</span></label>
+                                    <input type="checkbox" id="sameAsCurrentEmail" name="sameAsCurrentEmail"
+                                        class="form-checkbox text-blue-500"
+                                        style="width: 16px; height: 16px; border-radius: 20%;">
+                                    <label for="sameAsCurrentEmail" class="ml-2 text-gray-900 text-sm">Same
+                                        as Current
+                                        Email</label>
+                                </div>
+                                <input type="email" id="permanentEmail" name="permanentEmail" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="emailWarningPermanent" class="text-red-500 text-sm hidden">Invalid
+                                    email format!
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-4 mt-4">
+                            <!-- Current Address -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Current Address <span
+                                        class="text-red-500">*</span></label>
+                                <textarea id="currentAddress" name="currentAddress" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom"
+                                    rows="1"></textarea>
+                                <p id="addressWarningCurrent" class="text-red-500 text-sm hidden"></p>
+                            </div>
+
+                            <!-- Permanent Address with Smaller Rounded Checkbox -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <label class="block text-sm font-medium text-gray-600 mr-2">Permanent
+                                        Address <span class="text-red-500">*</span></label>
+                                    <input type="checkbox" id="sameAsCurrentAddress" name="sameAsCurrentAddress"
+                                        class="form-checkbox text-blue-500"
+                                        style="width: 16px; height: 16px; border-radius: 20%;">
+                                    <label for="sameAsCurrentAddress" class="ml-2 text-gray-900 text-sm">Same as Current
+                                        Address</label>
+                                </div>
+                                <textarea id="permanentAddress" required name="permanentAddress"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom"
+                                    rows="1"></textarea>
+                                <p id="addressWarningPermanent" class="text-red-500 text-sm hidden"></p>
+                            </div>
+
+                            <div class="space-y-2 ">
+                                <label class="block text-sm font-medium text-gray-600">Password <span
+                                        class="text-red-500">*</span></label>
+                                <div class="relative w-full h-11">
+                                    <input type="password" id="passwordField" name="passwordField" required
+                                        class="w-full h-full bg-gray-300 border border-gray-300 rounded-lg px-4 pr-10 text-gray-900 focus:outline-none focus:border-custom" />
+                                    <button type="button" id="togglePassword" name="togglePassword"
+                                        class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-900">
+                                        <i class="fas fa-eye text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 ">
+                                <label class="block text-sm font-medium text-gray-600">Confirm Password
+                                    <span class="text-red-500">*</span></label>
+                                <div class="relative w-full h-11">
+                                    <input type="password" id="confirmPasswordField" name="confirmPasswordField"
+                                        required disabled
+                                        class="w-full h-full bg-gray-300 border border-gray-300 rounded-lg px-4 pr-10 text-gray-900 cursor-not-allowed focus:outline-none focus:border-custom" />
+                                    <button type="button" id="toggleConfirmPassword" name="toggleConfirmPassword"
+                                        class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-900 cursor-not-allowed">
+                                        <i class="fas fa-eye text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic Information -->
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Academic Information</h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Highest Degree <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="highestDegree" name="highestDegree"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Passing Year <span
+                                        class="text-red-500">*</span></label>
+                                <input type="number" required id="passingYear" name="passingYear"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Board/University
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" required id="boardUniversity" name="boardUniversity"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Result(% or
+                                    class) <span class="text-red-500">*</span></label>
+                                <input type="text" required id="result" name="result"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Job -->
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Current Job Information</h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Date of Joining <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" required id="dateOfJoining" name="dateOfJoining"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Department <span
+                                        class="text-red-500">*</span></label>
+                                <select required id="department" name="department"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom">
+                                    {% for dept in department_list %}
+                                    <option value="{{ dept.department_id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Designation <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" required id="designation" name="designation"
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
+                                <p id="nameWarningDesignation" class="text-red-500 text-sm hidden"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Driving License Information
+                        </h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Number <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="licenseNumber" name="licenseNumber" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Issue Date <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" id="licenseIssueDate" name="licenseIssueDate" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Expiry Date <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" id="licenseExpiryDate" name="licenseExpiryDate" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Driving License (PDF only) <span
+                                        class="text-red-500">*</span></label>
+                                <input type="file" id="licenseFile" name="licenseFile" required
+                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                    accept="application/pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Passport -->
+                    <div class="bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Passport Information</h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Number <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="passportNumber" name="passportNumber" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Issue Date <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" id="passportIssueDate" name="passportIssueDate" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Expiry Date <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" id="passportExpiryDate" name="passportExpiryDate" required
+                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Passport (PDF only) <span
+                                        class="text-red-500">*</span></label>
+                                <input type="file" id="passportFile" name="passportFile" required
+                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                    accept="application/pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PR/Work Permit -->
+                    <div id="prWrapper" class=" bg-gray-100 p-6 rounded-lg mt-10">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="prPermitCheckbox" class="form-checkbox text-blue-500 w-5 h-5"
+                                style="width: 20px; height: 20px; border-radius: 20%;" />
+                            <label for="prPermitCheckbox" class="ml-3 text-gray-900 text-sm">
+                                <h2 class="text-xl font-semibold text-gray-900">I have a PR/Work Permit</h2>
+                            </label>
+                        </div>
+                        <div id="prPermitSection" class="hidden mt-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">PR/Work Permit Information
+                            </h2>
+                            <hr class="border-gray-300 my-6">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Number <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="prNumber" name="prNumber"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Inforce From
+                                        <span class="text-red-500">*</span></label>
+                                    <input type="date" id="prInforceFrom" name="prInforceFrom"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Expiry Date <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" id="prExpiryDate" name="prExpiryDate"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">PR Card / Work
+                                        Permit (PDF only) <span class="text-red-500">*</span></label>
+                                    <input type="file" id="prFile" name="prFile"
+                                        class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                        accept="application/pdf">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sinWrapper" class="bg-gray-100 p-6 rounded-lg mt-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="sinCertificateCheckbox"
+                                class="form-checkbox text-blue-500 w-5 h-5"
+                                style="width: 20px; height: 20px; border-radius: 20%;">
+                            <label for="sinCertificateCheckbox" class="ml-3 text-gray-900 text-sm">
+                                <h2 class="text-xl font-semibold text-gray-900">I have a SIN Certificate
+                                </h2>
+                            </label>
+                        </div>
+
+                        <!-- SIN Certificate Information Section -->
+                        <div id="sinCertificateSection" class="hidden mt-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">SIN Certificate Information
+                            </h2>
+                            <hr class="border-gray-300 my-6">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Number <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="sinNumber" name="sinNumber"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Issue Date <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" id="sinIssueDate" name="sinIssueDate"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Expiry Date <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" id="sinExpiryDate" name="sinExpiryDate"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">SIN Certificate (PDF only)
+                                        <span class="text-red-500">*</span></label>
+                                    <input type="file" id="sinFile" name="sinFile"
+                                        class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                        accept="application/pdf">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 p-6 rounded-lg mt-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="employmentHistoryCheckbox"
+                                class="form-checkbox text-blue-500 w-5 h-5"
+                                style="width: 20px; height: 20px; border-radius: 20%;">
+                            <label for="employmentHistoryCheckbox" class="ml-3 text-gray-900 text-sm">
+                                <h2 class="text-xl font-semibold text-gray-900">I have Employment History
+                                </h2>
+                            </label>
+                        </div>
+
+                        <!-- Employment History Section -->
+                        <div id="employmentHistorySection" class="hidden mt-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Employment History</h2>
+                            <hr class="border-gray-300 my-6">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Company Name
+                                        <span class="text-red-500">*</span></label>
+                                    <input type="text" id="companyName" name="companyName"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">Designation <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="designationEH" name="designationEH"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2" />
+                                    <p id="nameWarningDesignationEH" class="text-red-500 text-sm hidden"></p>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">From <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" id="employmentFrom" name="employmentFrom"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-600">To <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" id="employmentTo" name="employmentTo"
+                                        class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 p-6 rounded-lg mt-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="referencesCheckbox" class="form-checkbox text-blue-500 w-5 h-5"
+                                style="width: 20px; height: 20px; border-radius: 20%;">
+                            <label for="referencesCheckbox" class="ml-3 text-gray-900 text-sm">
+                                <h2 class="text-xl font-semibold text-gray-900">I want to Add References</h2>
+                            </label>
+                        </div>
+
+                        <!-- References Section -->
+                        <div id="referencesSection" class="hidden mt-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Add Reference</h2>
+                            <hr class="border-gray-300 my-6">
+
+                            <!-- Dynamic References Container -->
+                            <div id="referencesContainer">
+                                <div class="reference-entry grid grid-cols-4 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Reference Type <span
+                                                class="text-red-500">*</span></label>
+                                        <select required name="referenceType[]" id="referenceType"
+                                            class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                            <option>Professional</option>
+                                            <option>Personal</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Name
+                                            <span class="text-red-500">*</span></label>
+                                        <input type="text" name="referenceName[]" id="referenceName"
+                                            class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                        <p id="nameWarningReference" class="text-red-500 text-sm hidden"></p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Email
+                                            <span class="text-red-500">*</span></label>
+                                        <input type="email" name="referenceEmail[]" id="referenceEmail"
+                                            class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                        <p id="emailWarningReference" class="text-red-500 text-sm hidden">Invalid
+                                            email format!</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-600">Phone
+                                            <span class="text-red-500">*</span></label>
+                                        <input type="tel" name="referencePhone[]" id="referencePhone"
+                                            class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
+                                        <p id="phoneWarningReference" class="text-red-500 text-sm hidden">Only
+                                            numbers are allowed!</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add More Reference Button -->
+                            <button type="button" id="addReferenceBtn"
+                                class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Add More
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <div class=" bg-gray-100 p-6 rounded-lg mt-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Other Documents</h2>
+                        <hr class="border-gray-300 my-6">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600"> Profile Image(JPG, JPEG or PNG
+                                    only) <span class="text-red-500">*</span></label>
+                                <input type="file" id="profileImage" name="profileImage" required
+                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                    accept="image/png, image/jpeg, image/jpg">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Offer Letter (PDF only) <span
+                                        class="text-red-500">*</span></label>
+                                <input type="file" id="offerLetterFile" name="offerLetterFile" required
+                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                    accept="application/pdf">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-600">Contract
+                                    Letter (PDF only) <span class="text-red-500">*</span></label>
+                                <input type="file" id="contractLetterFile" name="contractLetterFile" required
+                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
+                                    accept="application/pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 p-6 rounded-lg mt-10">
+                        <div class="flex items-center justify-center mb-6">
+                            <input type="checkbox" id="consent" name="consent" required
+                                class="form-checkbox text-blue-500 w-5 h-5"
+                                style="width: 20px; height: 20px; border-radius: 20%;">
+                            <label for="consent" class="ml-3 text-gray-900 text-sm">
+                                <span class="text-red-500">*</span> I hereby declare that the information
+                                provided above
+                                is true and correct to the best of my knowledge.
+                                I understand that any misrepresentation or omission of facts may result in
+                                disqualification from employment or termination if discovered later.
+                            </label>
+                        </div>
+                        <div class="flex justify-start space-x-4 mt-4">
+                            <button type="submit" id="submitBtn" disabled
+                                class="px-4 py-2 bg-gray-300 text-white rounded-lg cursor-not-allowed">
+                                Add Employee
+                            </button>
+                            <button onclick="history.back()" type="button"
+                                class="px-4 py-2 bg-gray-300 text-gray-900 hover:text-white rounded-lg hover:bg-gray-600 active:transform active:scale-95 transition-transform">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Scroll Button -->
+    <button id="scrollBtn"
+        class="fixed bottom-6 right-6 bg-custom text-gray-900 rounded-full p-4 shadow-lg transition-all duration-300 hover:bg-blue-700">
+        <i id="scrollIcon" class="fas fa-arrow-down"></i>
+    </button>
+
+    <!-- ❌ Toast for missing PR/SIN -->
+    <div id="idProofErrorToast"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Please select either PR/Work Permit or SIN Certificate!
+    </div>
+
+
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+        function resetForm() {
+            document.forms[0].reset();
+            sessionStorage.clear(); // Remove stored input values
+        }
+
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted || window.performance && window.performance.navigation.type === 2) {
+                location.reload(); // Forces a fresh reload when navigating back
+            }
+        });
+
+        document.getElementById("employeeForm").addEventListener("submit", function (e) {
+            const prChecked = document.getElementById("prPermitCheckbox").checked;
+            const sinChecked = document.getElementById("sinCertificateCheckbox").checked;
+
+            if (!prChecked && !sinChecked) {
+                e.preventDefault(); // Stop form submission
+
+                // Scroll to PR/SIN checkbox section
+                const scrollTarget = document.getElementById("prPermitCheckbox");
+                scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+
+                // Show error toast
+                const toast = document.getElementById("idProofErrorToast");
+                toast.classList.remove("hidden");
+
+                setTimeout(() => {
+                    toast.classList.add("hidden");
+                }, 3000);
+
+                return false;
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Function to toggle visibility of sections
+            function toggleVisibility(checkboxId, sectionId) {
+                let checkbox = document.getElementById(checkboxId);
+                let section = document.getElementById(sectionId);
+
+                if (checkbox && section) {
+                    checkbox.addEventListener("change", function () {
+                        section.classList.toggle("hidden", !this.checked);
+                    });
+
+                    // Ensure correct state on page load
+                    section.classList.toggle("hidden", !checkbox.checked);
+                }
+            }
+
+            // Apply the toggle function to each checkbox-section pair
+            toggleVisibility("prPermitCheckbox", "prPermitSection");
+            toggleVisibility("sinCertificateCheckbox", "sinCertificateSection");
+            toggleVisibility("employmentHistoryCheckbox", "employmentHistorySection");
+            toggleVisibility("referencesCheckbox", "referencesSection");
+        });
+        // Enable submit button only if the consent checkbox is checked
+        document.getElementById("consent").addEventListener("change", function () {
+            const submitBtn = document.getElementById("submitBtn");
+
+            if (this.checked) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("bg-gray-300", "cursor-not-allowed"); // Remove disabled styles
+                submitBtn.classList.add(
+                    "bg-custom",
+                    "text-white",
+                    "hover:bg-blue-700",
+                    "active:transform",
+                    "active:scale-95",
+                    "transition-all",
+                    "duration-200"
+                );
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove(
+                    "bg-custom",
+                    "text-white",
+                    "hover:bg-blue-700",
+                    "active:transform",
+                    "active:scale-95",
+                    "transition-all",
+                    "duration-200"
+                );
+                submitBtn.classList.add("bg-gray-300", "cursor-not-allowed"); // Restore disabled styles
+            }
+        });
+    </script>
+    <script>
+        const form = document.getElementById("employeeForm");
+        const prCheckbox = document.getElementById("prPermitCheckbox");
+        const sinCheckbox = document.getElementById("sinCertificateCheckbox");
+        const prWrapper = document.getElementById("prWrapper");
+        const sinWrapper = document.getElementById("sinWrapper");
+        const toast = document.getElementById("idProofErrorToast");
+
+        // Helper: highlight both sections
+        function highlightSections() {
+            prWrapper.classList.add("border", "border-red-500");
+            sinWrapper.classList.add("border", "border-red-500");
+        }
+
+        // Helper: remove highlights
+        function removeHighlights() {
+            prWrapper.classList.remove("border", "border-red-500");
+            sinWrapper.classList.remove("border", "border-red-500");
+        }
+
+        // Listen for checkbox changes
+        [prCheckbox, sinCheckbox].forEach(box => {
+            box.addEventListener("change", () => {
+                if (prCheckbox.checked || sinCheckbox.checked) {
+                    removeHighlights();
+                }
+            });
+        });
+
+        // Form submission logic
+        form.addEventListener("submit", function (e) {
+            if (!prCheckbox.checked && !sinCheckbox.checked) {
+                e.preventDefault(); // block submit
+                highlightSections();
+
+                prWrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+
+                toast.classList.remove("hidden");
+                setTimeout(() => toast.classList.add("hidden"), 3000);
+            }
+        });
+    </script>
+
+</body>
