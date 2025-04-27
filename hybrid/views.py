@@ -813,7 +813,7 @@ class HybridProfileView(HybridRequiredMixin, TemplateView):
 
                 elif section == "sin":
                     sin_path = save_uploaded_file(
-                        request.FILES.get("sin_document"), "sin", emp_file_id, "sin"
+                        request.FILES.get("sin_document"), "sinCerti", emp_file_id, "sin"
                     )
                     exec_update_proc([
                         section, employee_id,
@@ -832,7 +832,7 @@ class HybridProfileView(HybridRequiredMixin, TemplateView):
 
                 elif section == "permit":
                     permit_path = save_uploaded_file(
-                        request.FILES.get("work_permit_document"), "work_permit", emp_file_id, "work_permit"
+                        request.FILES.get("work_permit_document"), "workPermit", emp_file_id, "workpermit"
                     )
                     exec_update_proc([
                         section, employee_id,
@@ -851,7 +851,7 @@ class HybridProfileView(HybridRequiredMixin, TemplateView):
 
                 elif section == "license":
                     license_path = save_uploaded_file(
-                        request.FILES.get("driving_license_document"), "driving_license", emp_file_id, "license"
+                        request.FILES.get("driving_license_document"), "drivingLicense", emp_file_id, "license"
                     )
                     exec_update_proc([
                         section, employee_id,
