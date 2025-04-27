@@ -1,0 +1,6 @@
+git status
+
+git add .     OR     git add filename1 filename2
+
+git commit -m "Your meaningful commit message here"
+git push origin main

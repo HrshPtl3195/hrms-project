@@ -11,10 +11,10 @@ urlpatterns = [
     path('leave-management/', LeaveManagementView.as_view(), name='employee_leave_management'),
     path('request-leave/', RequestLeaveView.as_view(), name='employee_request_leave'),
     path('payroll/', MyPayrollView.as_view(), name='employee_payroll'),
-    path('mypayroll/download/', DownloadPayslipPDFView.as_view(), name='download_my_payslipE'),
+    path('mypayroll/download/', DownloadPayslipPDFView.as_view(), name='e_download_my_payslip'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('cancel-leave/', CancelLeaveRequestView.as_view(), name='cancel_leave_request'),
-    path('download-leave-pdf/<int:leave_id>/', DownloadLeavePDFView.as_view(), name='download_leave_pdf'),
+    path('download-leave-pdf/<int:leave_id>/', DownloadLeavePDFView.as_view(), name='e_download_leave_pdf'),
 ]
 
 
