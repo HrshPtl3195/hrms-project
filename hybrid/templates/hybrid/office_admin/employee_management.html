@@ -24,44 +24,44 @@
             <div class="p-6">
                 <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
             </div>
-            <a href="{% url 'hybrid_dashboard' %}">
+            <a href="{% url 'hybrid_office_admin_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
                     <div class="flex items-center">
                         <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
                         <div class="ml-3">
                             <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
-                             <p class="text-sm text-gray-600">Hybrid</p>
+                             <p class="text-sm text-gray-600">Office Admin</p>
                         </div>
                     </div>
                 </div>
             </a>
             <nav class="mt-6">
-                <a href="{% url 'hybrid_profile' %}"
+                <a href="{% url 'hybrid_office_admin_profile' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-user w-5"></i>
                     <span class="ml-3">Profile</span>
                 </a>
-                <a href="{% url 'hybrid_employee_management' %}"
+                <a href="{% url 'hybrid_office_admin_employee_management' %}"
                     class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
                     <i class="fas fa-users w-5"></i>
                     <span class="ml-3">Employee Management</span>
                 </a>
-                <a href="{% url 'hybrid_leave_approval' %}"
+                <a href="{% url 'hybrid_office_admin_leave_approval' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Approvals</span>
                 </a>
-                <a href="{% url 'hybrid_payroll' %}"
+                <a href="{% url 'hybrid_office_admin_payroll' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-money-bill-wave w-5"></i>
                     <span class="ml-3">Payroll Management</span>
                 </a>
-                <a href="{% url 'hybrid_leave_management' %}"
+                <a href="{% url 'hybrid_office_admin_leave_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Management</span>
                 </a>
-                <a href="{% url 'hybrid_my_payroll' %}"
+                <a href="{% url 'hybrid_office_admin_my_payroll' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">My Payroll</span>
@@ -83,7 +83,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-3xl font-bold mb-6">Employee Management</h2>
-                    <a href="{% url 'hybrid_add_employee' %}"
+                    <a href="{% url 'hybrid_office_admin_add_employee' %}"
                         class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95">
                         <i class="fas fa-plus mr-2"></i>Employee
                     </a>
@@ -383,7 +383,7 @@
             const query = document.getElementById("searchTab").value;
             const departmentId = document.getElementById("department").value;
 
-            const url = new URL("{% url 'hybrid_employee_export' %}", window.location.origin);
+            const url = new URL("{% url 'hybrid_office_admin_employee_export' %}", window.location.origin);
             if (query) url.searchParams.append("q", query);
             if (departmentId) url.searchParams.append("department_id", departmentId);
             url.searchParams.append("format", format);
@@ -485,7 +485,7 @@
             const query = document.getElementById("searchTab").value;
             const departmentId = document.getElementById("department").value;
 
-            const url = new URL("{% url 'hybrid_employee_export' %}", window.location.origin);
+            const url = new URL("{% url 'hybrid_office_admin_employee_export' %}", window.location.origin);
             if (query) url.searchParams.append("q", query);
             if (departmentId) url.searchParams.append("department_id", departmentId);
             url.searchParams.append("format", format);
@@ -652,7 +652,7 @@
             const query = searchInput.value.trim();
             const deptId = departmentDropdown.value;
 
-            const url = new URL("{% url 'hybrid_employee_search' %}", window.location.origin);
+            const url = new URL("{% url 'hybrid_office_admin_employee_search' %}", window.location.origin);
             url.searchParams.append("q", query);
             url.searchParams.append("page", pageNumber);
             if (deptId) {

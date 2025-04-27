@@ -38,6 +38,7 @@ class HybridRequiredMixin(LoginRequiredMixin):
 class HybridDashboardView(HybridRequiredMixin, View):
     def get(self, request):
         print("\n||  Dashboard Page Visited!  ||\n")
+      
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
@@ -53,7 +54,7 @@ class HybridDashboardView(HybridRequiredMixin, View):
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/dashboard.html", data)
+        return render(request, "hybrid/office_admin/dashboard.html", data)
 
     def get_dashboard_data(self, user_id):
         """ Fetch HR dashboard statistics using raw SQL queries """
@@ -304,6 +305,192 @@ class HybridDashboardView(HybridRequiredMixin, View):
         }
 
 
+class EmployeeDashboardView(HybridRequiredMixin, TemplateView):
+    def get(self, request):
+        print("\n||  Employee Dashboard Page Visited!  ||\n")
+        
+        if not hasattr(request.user, "user_id"):
+            return redirect("login")
+
+        try:
+            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
+            data = self.get_data(request.user.user_id)
+            
+            if data.get("profile_image"):
+                data["profile_image"] = data["profile_image"].replace("\\", "/")
+                
+        except Exception as e:
+            logger.error("\n❌ Error fetching data:", exc_info=True)
+            data = {}
+
+        return render(request, "hybrid/employee/dashboard.html", data)
+
+    def get_data(self, user_id):
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT e.first_name, e.middle_name, e.last_name \
+                FROM employees e\
+                JOIN users u ON e.user_id = u.user_id\
+                WHERE u.user_id = {user_id};")
+            user = cursor.fetchone()
+            user_name = user[0] + " " + user[2]
+
+            cursor.execute(f"SELECT date_of_joining FROM employees WHERE is_deleted = 0 and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            date_of_joining = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) FROM leaves WHERE L_status = 'PENDING' and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            pending_requests = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT ISNULL(SUM(salary), 0) FROM payslips where\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            last_payroll = cursor.fetchone()[0]
+            
+            cursor.execute(f"SELECT (MAX(total_leaves) - COUNT(CASE WHEN L_status = 'APPROVED' THEN 1 END)) AS leaves_left\
+            FROM leaves WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id});")
+            leave_balance = cursor.fetchone()[0]
+            leave_balance = 0 if leave_balance == None else leave_balance
+            
+            cursor.execute(f"SELECT  COUNT(CASE WHEN L_status = 'APPROVED' THEN 1 END)\
+            FROM leaves WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id});")
+            leaves_taken = cursor.fetchone()[0]
+            
+            cursor.execute(f"SELECT designation FROM employees WHERE is_deleted = 0 and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            designation = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT employee_id FROM employees WHERE user_id = {user_id}")
+            employee_id = cursor.fetchone()[0]
+            
+            cursor.execute(f"""
+                SELECT profile_image 
+                FROM other_documents 
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})""") # change 4 to variable for user id
+            profile_image = cursor.fetchone()
+            profile_image = profile_image[0] if profile_image else None
+            
+            # Fetch leave history for dashboard
+            cursor.execute("EXEC GetEmployeeLeaveHistory @user_id = %s", [user_id])
+            leave_history = cursor.fetchall()
+
+            # Build list of dicts
+            leave_list = []
+            for row in leave_history:
+                leave_list.append({
+                    "type": row[1],
+                    "start": row[2],
+                    "end": row[3],
+                    "status": row[5]
+                })
+            notifications = []
+
+            # 1. Recently approved/rejected leaves
+            cursor.execute("""
+                SELECT leave_type, L_start_date, L_end_date, L_status
+                FROM leaves
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                AND L_apply_date >= DATEADD(DAY, -15, GETDATE())
+                ORDER BY L_apply_date DESC
+            """, [user_id])
+
+            for leave in cursor.fetchall():
+                leave_type, start, end, status = leave
+                date_range = start.strftime("%b %d") if start == end else f"{start.strftime('%b %d')}–{end.strftime('%b %d')}"
+
+                if status == 'APPROVED':
+                    notifications.append({
+                        "type": "success",
+                        "message": f"Your leave from {date_range} has been approved."
+                    })
+                elif status == 'REJECTED':
+                    notifications.append({
+                        "type": "error",
+                        "message": f"Your leave from {date_range} was rejected."
+                    })
+
+            # 2. Upcoming approved leave
+            cursor.execute("""
+                SELECT L_start_date, L_end_date
+                FROM leaves
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                AND L_status = 'APPROVED'
+                AND L_start_date BETWEEN GETDATE() AND DATEADD(DAY, 3, GETDATE())
+                ORDER BY L_start_date ASC
+            """, [user_id])
+            upcoming = cursor.fetchone()
+            if upcoming:
+                start, end = upcoming
+                date_range = start.strftime("%b %d") if start == end else f"{start.strftime('%b %d')}–{end.strftime('%b %d')}"
+                notifications.append({
+                    "type": "warning",
+                    "message": f"You have an approved leave starting soon ({date_range})."
+                })
+
+            # 3. New payslip generated this month
+            cursor.execute("""
+                SELECT TOP 1 date_generated
+                FROM payslips
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                ORDER BY date_generated DESC
+            """, [user_id])
+            last_payslip = cursor.fetchone()
+            if last_payslip:
+                date_generated = last_payslip[0]
+                if date_generated.month == date.today().month:
+                    notifications.append({
+                        "type": "info",
+                        "message": f"Your payslip for {date_generated.strftime('%B')} is now available."
+                    })
+
+            # 4. Missing SIN or Passport documents
+            cursor.execute("""
+                SELECT sin_document, passport_document
+                FROM employees e
+                LEFT JOIN sin_details s ON s.employee_id = e.employee_id
+                LEFT JOIN passport_details p ON p.employee_id = e.employee_id
+                WHERE e.user_id = %s
+            """, [user_id])
+            docs = cursor.fetchone()
+            if docs:
+                if not docs[0]:
+                    notifications.append({
+                        "type": "warning",
+                        "message": "Your SIN Certificate is missing."
+                    })
+                if not docs[1]:
+                    notifications.append({
+                        "type": "warning",
+                        "message": "Your Passport Document is missing."
+                    })
+
+            # 5. Optional: low salary alert
+            cursor.execute("""
+                SELECT TOP 1 salary FROM payslips
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                ORDER BY date_generated DESC
+            """, [user_id])
+            salary = cursor.fetchone()
+            if salary and salary[0] < 1500:  # threshold
+                notifications.append({
+                    "type": "error",
+                    "message": "Your recent salary is below expected range."
+                })
+
+        return {
+            "user_name": user_name,
+            "profile_image": profile_image,
+            "leave_balance": leave_balance,
+            "pending_requests": pending_requests,
+            "last_payroll": last_payroll,
+            "designation": designation,
+            'employee_id': employee_id,
+            'date_of_joining': date_of_joining,
+            "dashboard_leave_history": leave_list[:3],
+            "notifications": notifications,
+            "leaves_taken": leaves_taken
+        }
+ 
+
 class HybridProfileView(HybridRequiredMixin, TemplateView):
     def get(self, request):
         if not hasattr(request.user, "user_id"):
@@ -325,8 +512,9 @@ class HybridProfileView(HybridRequiredMixin, TemplateView):
         except Exception as e:
             logger.error("❌ Error fetching data:", exc_info=True)
             context = {}
-
-        return render(request, "hybrid/profile.html", context)
+            
+        current_user = request.session.get('current_user', 'unknown')
+        return render(request, f"hybrid/{current_user}/profile.html", context)
     
     def dictfetchone(self,cursor):
         row = cursor.fetchone()
@@ -693,8 +881,11 @@ class HybridProfileView(HybridRequiredMixin, TemplateView):
                         request.POST.get("middle_name")
                     ])
 
-            # ✅ Redirect to trigger success toast
-            return redirect("hybrid_profile")
+            current_user = request.session.get('current_user', 'unknown')
+            if current_user == "employee":
+                return redirect("hybrid_employyee_profile")
+            else:
+                return redirect("hybrid_office_admin_profile")
 
         except Exception as e:
             logger.error("❌ Error updating profile info", exc_info=True)
@@ -738,7 +929,7 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
             logger.error("❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/employee_management.html", data)
+        return render(request, "hybrid/office_admin/employee_management.html", data)
 
     def get_employee_data(self, user_id):
         with connection.cursor() as cursor:
@@ -1156,19 +1347,19 @@ class EmployeeDeleteView(HybridRequiredMixin, View):
                     WHERE employee_id = %s
                 """, [employee_id])
 
-            response = redirect("hybrid_employee_management")
+            response = redirect("hybrid_office_admin_employee_management")
             response.set_cookie("employeeDeleteStatus", "success", max_age=5)
             return response
 
         except Exception as e:
             logger.error("❌ Error deleting employee:", exc_info=True)
-            response = redirect("hybrid_employee_management")
+            response = redirect("hybrid_office_admin_employee_management")
             response.set_cookie("employeeDeleteStatus", "error", max_age=5)
             return response
 
 
 class AddEmployeeView(HybridRequiredMixin, TemplateView):
-    template_name = "hybrid/add_employee.html"
+    template_name = "hybrid/office_admin/add_employee.html"
 
     def dispatch(self, request, *args, **kwargs):
         print("\n||  Add Employee Page Visited!  ||\n")
@@ -1195,7 +1386,7 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             logger.error("❌ Error fetching data:", exc_info=True)
             data = {}
 
-        response = render(request, "hybrid/add_employee.html", data)
+        response = render(request, "hybrid/office_admin/add_employee.html", data)
         add_never_cache_headers(response)  # Prevent browser from caching the form
         return response
 
@@ -1599,7 +1790,7 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             # Commit transaction
             conn.commit()
             print(f"✅ Inserted Employee")
-            response = redirect("hybrid_employee_management")
+            response = redirect("hybrid_office_admin_employee_management")
             response.set_cookie("employeeAddStatus", "success", max_age=5)
             return response
 
@@ -1608,7 +1799,7 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             if conn:
                 conn.rollback()  # Rollback only if connection exists
             print(f"❌ Error: {e}")  # Debugging
-            response = redirect("hybrid_employee_management")
+            response = redirect("hybrid_office_admin_employee_management")
             response.set_cookie("employeeAddStatus", "error", max_age=5)
             return response
 
@@ -1642,7 +1833,8 @@ class LeaveManagementView(HybridRequiredMixin, TemplateView):
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/leave_management.html", data)
+        current_user = request.session.get('current_user', 'unknown')
+        return render(request, f"hybrid/{current_user}/leave_management.html", data)
 
     def get_data(self, user_id, page_number=1, page_size=5):
         with connection.cursor() as cursor:
@@ -1828,7 +2020,7 @@ class LeaveApprovalView(HybridRequiredMixin, TemplateView):
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/leave_approval.html", data)
+        return render(request, "hybrid/office_admin/leave_approval.html", data)
 
     def get_leave_data(self, user_id):
         """ Fetch HR dashboard statistics using raw SQL queries """
@@ -2249,7 +2441,7 @@ class CancelLeaveRequestView(HybridRequiredMixin, View):
     def post(self, request):
         leave_id = request.POST.get("leave_id")
         user_id = request.user.user_id
-
+        current_user = request.session.get('current_user', 'unknown')
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -2261,7 +2453,11 @@ class CancelLeaveRequestView(HybridRequiredMixin, View):
                 record = cursor.fetchone()
 
                 if not record:
-                    response = redirect("hybrid_leave_management")
+                    
+                    if current_user == "employee":
+                        response = redirect("hybrid_employee_leave_management")
+                    else:
+                        response = redirect("hybrid_office_admin_leave_management")
                     response.set_cookie("leaveCancelStatus", "error", max_age=5)
                     return response
 
@@ -2271,13 +2467,19 @@ class CancelLeaveRequestView(HybridRequiredMixin, View):
                     WHERE leave_id = %s
                 """, [leave_id])
 
-                response = redirect("hybrid_leave_management")
+                if current_user == "employee":
+                    response = redirect("hybrid_employee_leave_management")
+                else:
+                    response = redirect("hybrid_office_admin_leave_management")
                 response.set_cookie("leaveCancelStatus", "success", max_age=5)
                 return response
 
         except Exception as e:
             logger.error("❌ Error cancelling leave request", exc_info=True)
-            response = redirect("hybrid_leave_management")
+            if current_user == "employee":
+                response = redirect("hybrid_employee_leave_management")
+            else:
+                response = redirect("hybrid_office_admin_leave_management")
             response.set_cookie("leaveCancelStatus", "error", max_age=5)
             return response
 
@@ -2300,7 +2502,8 @@ class RequestLeaveView(HybridRequiredMixin, TemplateView):
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/request_leave.html", data)
+        current_user = request.session.get('current_user', 'unknown')
+        return render(request, f"hybrid/{current_user}/request_leave.html", data)
 
     def get_data(self, user_id):
         with connection.cursor() as cursor:
@@ -2389,7 +2592,7 @@ class RequestLeaveView(HybridRequiredMixin, TemplateView):
 
 
 class PayrollView(HybridRequiredMixin, TemplateView):
-    template_name = "hybrid/payroll.html"
+    template_name = "hybrid/office_admin/payroll.html"
 
     def get(self, request):
         if not hasattr(request.user, "user_id"):
@@ -2718,8 +2921,7 @@ class ExportPayslipsView(HybridRequiredMixin, View):
 
 
 class MyPayrollView(HybridRequiredMixin, TemplateView):
-    template_name = 'hybrid/mypayroll.html'
-
+    
     def get(self, request):
         if not hasattr(request.user, "user_id"):
             return redirect("login")
@@ -2778,8 +2980,9 @@ class MyPayrollView(HybridRequiredMixin, TemplateView):
                 "deductions": f"${float(row[3]):,.2f}",
                 "net": f"${float(row[4]):,.2f}",
             } for row in rows]
-            
-        return render(request, self.template_name, {
+          
+        current_user = request.session.get('current_user', 'unknown')  
+        return render(request, f'hybrid/{current_user}/mypayroll.html', {
             "user_name": user_name,
             "profile_image": profile_image,
             "current_salary": f"${current_salary:,.2f}",

@@ -4,19 +4,17 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 from django.core.mail import send_mail
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from .models import Users
+from django.http import HttpResponseRedirect, JsonResponse
 from core.authentication import EmailAuthBackend
-import logging
+import logging, random, json
 from django.db import connection
-import random
 from django.utils import timezone
 from .models import PasswordResetOTP, Users
-from django.http import JsonResponse
 from django.utils.timezone import now  
 
 logger = logging.getLogger(__name__)
@@ -39,37 +37,46 @@ class LoginView(View):
         return response
 
     def post(self, request):
-        email = request.POST.get('email', '').strip() 
-        password = request.POST.get('password', '')
-        # print(email, password)
-        # user = authenticate(request, username=email, password=password) 
-        
-        user = EmailAuthBackend.authenticate(self,request, username=email, password=password) 
-        # print(user)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            data = json.loads(request.body)
+            email = data.get('email', '').strip()
+            password = data.get('password', '')
+        else:
+            email = request.POST.get('email', '').strip()
+            password = request.POST.get('password', '')
+
+        user = EmailAuthBackend.authenticate(self, request, username=email, password=password)
+
         if user:
             backend = 'core.authentication.EmailAuthBackend'
-            request.session['_auth_user_backend'] = backend  # ✅ Explicitly set backend
-            # print(0)
+            request.session['_auth_user_backend'] = backend
             login(request, user, backend=backend)
-            # print(1)
-            request.session.set_expiry(1800)  
-            
-            next_url = request.GET.get('next')
-            if next_url:
-                # print(2)
-                return redirect(next_url)
+            request.session.set_expiry(1800)
 
-            role_redirects = {
-                'hr_admin': 'hr_admin_dashboard',
-                'employee': 'employee_dashboard',
-                'office_admin': 'office_admin_dashboard',
-                'hybrid': 'hybrid_dashboard'
-            }
-            # print(role_redirects.get(user.u_role.lower()))
-            return redirect(role_redirects.get(user.u_role.lower(), 'login')) if user.u_role else redirect('login')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                if user.u_role.lower() == 'hybrid':
+                    request.session['is_hybrid'] = True
+                    return JsonResponse({'success': True, 'role': 'hybrid'})
+                else:
+                    role_redirects = {
+                        'hr_admin': 'hr_admin_dashboard',
+                        'employee': 'employee_dashboard',
+                        'office_admin': 'office_admin_dashboard',
+                    }
+                    return JsonResponse({
+                        'success': True,
+                        'role': user.u_role.lower(),
+                        'redirect_url': reverse(role_redirects.get(user.u_role.lower(), 'login'))
+                    })
 
-        messages.error(request, 'Invalid email or password')
-        return render(request, 'core/login.html')
+            # fallback for non-AJAX
+            return redirect(role_redirects.get(user.u_role.lower(), 'login'))
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'Invalid email or password'})
+
+        # Legacy fallback (optional): can remove if unused
+        return redirect('login')
 
 
 class LogoutView(View):
@@ -826,6 +833,19 @@ class EmployeeDashboardView(LoginRequiredMixin, TemplateView):
         }
 
 
+class ChooseRoleView(LoginRequiredMixin, TemplateView):
+    def get(self, request, role):
+        if request.user.is_authenticated and request.session.get('is_hybrid'):
+            del request.session['is_hybrid']
+            if role == 'employee':
+                request.session['current_user'] = "employee"
+                return redirect('hybrid_employee_dashboard')
+            elif role == 'office_admin':
+                request.session['current_user'] = "office_admin"
+                return redirect('hybrid_office_admin_dashboard')
+        return redirect('login')
+
+
 class HybridDashboardView(LoginRequiredMixin, TemplateView):
     def get(self, request):
         print("\n||  Dashboard Page Visited!  ||\n")
@@ -844,7 +864,7 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
 
-        return render(request, "hybrid/dashboard.html", data)
+        return render(request, "hybrid/office_admin/dashboard.html", data)
 
     def get_dashboard_data(self, user_id):
         """ Fetch HR dashboard statistics using raw SQL queries """
@@ -1093,6 +1113,191 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
             "leave_status_list": leave_status_list
         }
 
+
+class HybridEmployeeDashboardView(LoginRequiredMixin, TemplateView):
+    def get(self, request):
+        print("\n||  Employee Dashboard Page Visited!  ||\n")
+        if not hasattr(request.user, "user_id"):
+            return redirect("login")
+
+        try:
+            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
+            data = self.get_data(request.user.user_id)
+            
+            if data.get("profile_image"):
+                data["profile_image"] = data["profile_image"].replace("\\", "/")
+                
+        except Exception as e:
+            logger.error("\n❌ Error fetching data:", exc_info=True)
+            data = {}
+
+        return render(request, "hybrid/employee/dashboard.html", data)
+
+    def get_data(self, user_id):
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT e.first_name, e.middle_name, e.last_name \
+                FROM employees e\
+                JOIN users u ON e.user_id = u.user_id\
+                WHERE u.user_id = {user_id};")
+            user = cursor.fetchone()
+            user_name = user[0] + " " + user[2]
+
+            cursor.execute(f"SELECT date_of_joining FROM employees WHERE is_deleted = 0 and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            date_of_joining = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) FROM leaves WHERE L_status = 'PENDING' and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            pending_requests = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT ISNULL(SUM(salary), 0) FROM payslips where\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            last_payroll = cursor.fetchone()[0]
+            
+            cursor.execute(f"SELECT (MAX(total_leaves) - COUNT(CASE WHEN L_status = 'APPROVED' THEN 1 END)) AS leaves_left\
+            FROM leaves WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id});")
+            leave_balance = cursor.fetchone()[0]
+            leave_balance = 0 if leave_balance == None else leave_balance
+            
+            cursor.execute(f"SELECT  COUNT(CASE WHEN L_status = 'APPROVED' THEN 1 END)\
+            FROM leaves WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id});")
+            leaves_taken = cursor.fetchone()[0]
+            
+            cursor.execute(f"SELECT designation FROM employees WHERE is_deleted = 0 and\
+                employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})")
+            designation = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT employee_id FROM employees WHERE user_id = {user_id}")
+            employee_id = cursor.fetchone()[0]
+            
+            cursor.execute(f"""
+                SELECT profile_image 
+                FROM other_documents 
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = {user_id})""") # change 4 to variable for user id
+            profile_image = cursor.fetchone()
+            profile_image = profile_image[0] if profile_image else None
+            
+            # Fetch leave history for dashboard
+            cursor.execute("EXEC GetEmployeeLeaveHistory @user_id = %s", [user_id])
+            leave_history = cursor.fetchall()
+
+            # Build list of dicts
+            leave_list = []
+            for row in leave_history:
+                leave_list.append({
+                    "type": row[1],
+                    "start": row[2],
+                    "end": row[3],
+                    "status": row[5]
+                })
+            notifications = []
+
+            # 1. Recently approved/rejected leaves
+            cursor.execute("""
+                SELECT leave_type, L_start_date, L_end_date, L_status
+                FROM leaves
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                AND L_apply_date >= DATEADD(DAY, -15, GETDATE())
+                ORDER BY L_apply_date DESC
+            """, [user_id])
+
+            for leave in cursor.fetchall():
+                leave_type, start, end, status = leave
+                date_range = start.strftime("%b %d") if start == end else f"{start.strftime('%b %d')}–{end.strftime('%b %d')}"
+
+                if status == 'APPROVED':
+                    notifications.append({
+                        "type": "success",
+                        "message": f"Your leave from {date_range} has been approved."
+                    })
+                elif status == 'REJECTED':
+                    notifications.append({
+                        "type": "error",
+                        "message": f"Your leave from {date_range} was rejected."
+                    })
+
+            # 2. Upcoming approved leave
+            cursor.execute("""
+                SELECT L_start_date, L_end_date
+                FROM leaves
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                AND L_status = 'APPROVED'
+                AND L_start_date BETWEEN GETDATE() AND DATEADD(DAY, 3, GETDATE())
+                ORDER BY L_start_date ASC
+            """, [user_id])
+            upcoming = cursor.fetchone()
+            if upcoming:
+                start, end = upcoming
+                date_range = start.strftime("%b %d") if start == end else f"{start.strftime('%b %d')}–{end.strftime('%b %d')}"
+                notifications.append({
+                    "type": "warning",
+                    "message": f"You have an approved leave starting soon ({date_range})."
+                })
+
+            # 3. New payslip generated this month
+            cursor.execute("""
+                SELECT TOP 1 date_generated
+                FROM payslips
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                ORDER BY date_generated DESC
+            """, [user_id])
+            last_payslip = cursor.fetchone()
+            if last_payslip:
+                date_generated = last_payslip[0]
+                if date_generated.month == date.today().month:
+                    notifications.append({
+                        "type": "info",
+                        "message": f"Your payslip for {date_generated.strftime('%B')} is now available."
+                    })
+
+            # 4. Missing SIN or Passport documents
+            cursor.execute("""
+                SELECT sin_document, passport_document
+                FROM employees e
+                LEFT JOIN sin_details s ON s.employee_id = e.employee_id
+                LEFT JOIN passport_details p ON p.employee_id = e.employee_id
+                WHERE e.user_id = %s
+            """, [user_id])
+            docs = cursor.fetchone()
+            if docs:
+                if not docs[0]:
+                    notifications.append({
+                        "type": "warning",
+                        "message": "Your SIN Certificate is missing."
+                    })
+                if not docs[1]:
+                    notifications.append({
+                        "type": "warning",
+                        "message": "Your Passport Document is missing."
+                    })
+
+            # 5. Optional: low salary alert
+            cursor.execute("""
+                SELECT TOP 1 salary FROM payslips
+                WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)
+                ORDER BY date_generated DESC
+            """, [user_id])
+            salary = cursor.fetchone()
+            if salary and salary[0] < 1500:  # threshold
+                notifications.append({
+                    "type": "error",
+                    "message": "Your recent salary is below expected range."
+                })
+
+        return {
+            "user_name": user_name,
+            "profile_image": profile_image,
+            "leave_balance": leave_balance,
+            "pending_requests": pending_requests,
+            "last_payroll": last_payroll,
+            "designation": designation,
+            'employee_id': employee_id,
+            'date_of_joining': date_of_joining,
+            "dashboard_leave_history": leave_list[:3],
+            "notifications": notifications,
+            "leaves_taken": leaves_taken
+        }
+        
 
 class ForgotPasswordView(View):
     def get(self, request):

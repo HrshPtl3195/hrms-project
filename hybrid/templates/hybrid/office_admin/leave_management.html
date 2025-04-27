@@ -24,44 +24,44 @@
             <div class="p-6">
                 <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
             </div>
-            <a href="{% url 'hybrid_dashboard' %}">
+            <a href="{% url 'hybrid_office_admin_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
                     <div class="flex items-center">
                         <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
                         <div class="ml-3">
                             <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
-                             <p class="text-sm text-gray-600">Hybrid</p>
+                             <p class="text-sm text-gray-600">Office Admin</p>
                         </div>
                     </div>
                 </div>
             </a>
             <nav class="mt-6">
-                <a href="{% url 'hybrid_profile' %}"
+                <a href="{% url 'hybrid_office_admin_profile' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-user w-5"></i>
                     <span class="ml-3">Profile</span>
                 </a>
-                <a href="{% url 'hybrid_employee_management' %}"
+                <a href="{% url 'hybrid_office_admin_employee_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-users w-5"></i>
                     <span class="ml-3">Employee Management</span>
                 </a>
-                <a href="{% url 'hybrid_leave_approval' %}"
+                <a href="{% url 'hybrid_office_admin_leave_approval' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Approvals</span>
                 </a>
-                <a href="{% url 'hybrid_payroll' %}"
+                <a href="{% url 'hybrid_office_admin_payroll' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-money-bill-wave w-5"></i>
                     <span class="ml-3">Payroll Management</span>
                 </a>
-                <a href="{% url 'hybrid_leave_management' %}"
+                <a href="{% url 'hybrid_office_admin_leave_management' %}"
                     class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Management</span>
                 </a>
-                <a href="{% url 'hybrid_my_payroll' %}"
+                <a href="{% url 'hybrid_office_admin_my_payroll' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">My Payroll</span>
@@ -133,7 +133,7 @@
                         <div class="bg-gray-100 p-6 rounded-lg mb-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-medium">Leave History</h3>
-                                <a href="{% url 'hybrid_request_leave' %}"
+                                <a href="{% url 'hybrid_office_admin_request_leave' %}"
                                     class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95">
                                     <i class="fas fa-plus mr-2"></i>Request Leave
                                 </a>
@@ -182,7 +182,7 @@
                                                 </button>
 
                                                 {% else %}
-                                                <button data-url="{% url 'hybrid_download_leave_pdf' leave.leave_id %}"
+                                                <button data-url="{% url 'hybrid_office_admin_download_leave_pdf' leave.leave_id %}"
                                                     onclick="downloadLeavePDF(this.dataset.url)"
                                                     class="download-button px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded"
                                                     title="Download PDF">
@@ -240,7 +240,7 @@
             <h3 class="text-xl font-semibold mb-4 text-center text-red-600">Confirm Cancellation</h3>
             <p class="text-center text-gray-700 mb-6">Are you sure you want to cancel this leave request?</p>
 
-            <form id="cancelLeaveForm" method="POST" action="{% url 'hybrid_cancel_leave_request' %}">
+            <form id="cancelLeaveForm" method="POST" action="{% url 'hybrid_office_admin_cancel_leave_request' %}">
                 {% csrf_token %}
                 <input type="hidden" name="leave_id" id="leave_id_field">
                 <div class="flex justify-between gap-4">
@@ -301,7 +301,7 @@
 
 
         function cancelLeave(leaveId) {
-            fetch("{% url 'hybrid_cancel_leave_request' %}", {
+            fetch("{% url 'hybrid_office_admin_cancel_leave_request' %}", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",

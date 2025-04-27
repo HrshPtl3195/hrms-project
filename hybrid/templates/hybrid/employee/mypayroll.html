@@ -22,48 +22,33 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <img src="{% static 'images/aureus.png' %}" alt="Logo"  class="h-10 w-auto" />
             </div>
-            <a href="{% url 'office_dashboard' %}">
+            <a href="{% url 'hybrid_employee_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
                     <div class="flex items-center">
-                        <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
+                        <img src="/media/{{ profile_image }}" alt="Employee" class="w-12 h-12 rounded-full" />
                         <div class="ml-3">
                             <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
-                            <p class="text-sm text-gray-600">Office Admin</p>
+                            <p class="text-sm text-gray-600">Employee</p>
                         </div>
                     </div>
                 </div>
             </a>
             <nav class="mt-6">
-                <a href="{% url 'office_profile' %}"
+                <a href="{% url 'hybrid_employee_profile' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-user w-5"></i>
-                    <span class="ml-3">Profile</span>
+                    <span class="ml-3">My Profile</span>
                 </a>
-                <a href="{% url 'office_employee_management' %}"
+                <a href="{% url 'hybrid_employee_leave_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-users w-5"></i>
-                    <span class="ml-3">Employee Management</span>
-                </a>
-                <a href="{% url 'office_leave_approval' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-calendar-check w-5"></i>
-                    <span class="ml-3">Leave Approvals</span>
-                </a>
-                <a href="{% url 'office_payroll' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-money-bill-wave w-5"></i>
-                    <span class="ml-3">Payroll Management</span>
-                </a>
-                <a href="{% url 'office_leave_management' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-calendar-check w-5"></i>
+                    <i class="fas fa-calendar-check w-5 "></i>
                     <span class="ml-3">Leave Management</span>
                 </a>
-                <a href="{% url 'office_my_payroll' %}"
+                <a href="{% url 'hybrid_employee_payroll' %}"
                     class="flex items-center px-6 py-3 text-custom hover:bg-gray-200">
-                    <i class="fas fa-calendar-check w-5"></i>
+                    <i class="fas fa-money-bill-wave w-5"></i>
                     <span class="ml-3">My Payroll</span>
                 </a>
             </nav>
@@ -154,7 +139,7 @@
                                             <td class="px-4 py-3">{{ record.deductions }}</td>
                                             <td class="px-4 py-3 font-semibold text-green-700">{{ record.net }}</td>
                                             <td class="px-4 py-3 text-left">
-                                                <a href="{% url 'download_my_payslipO' %}" target="_blank">
+                                                <a href="{% url 'download_my_payslipE' %}" target="_blank">
                                                     <button class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
                                                         <i class="fas fa-download"></i>
                                                     </button>

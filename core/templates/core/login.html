@@ -57,7 +57,9 @@
                 {% endif %}
 
                 <!-- Login Form -->
-                <form method="POST" action="{% url 'login' %}" class="space-y-4">
+                <!-- <form method="POST" action="{% url 'login' %}" class="space-y-4"> -->
+                <form id="loginForm" class="space-y-4">
+
                     {% csrf_token %}
                     <input type="hidden" name="user_type" id="user_type" value="admin" />
 
@@ -93,7 +95,7 @@
                             class="text-sm font-semibold text-custom hover:text-custom/90">Forgot password?</a>
                     </div>
 
-                    <button type="submit"
+                    <button id="loginBtn" type="button"
                         class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-custom hover:bg-custom/90 focus:ring-2 focus:ring-custom transition-all duration-200 transform hover:scale-[1.02]">
                         Sign in
                     </button>
@@ -117,6 +119,27 @@
             </div>
         </div>
     </footer>
+
+    <div id="roleSelectModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md relative">
+            <button onclick="window.location.href='{% url 'logout' %}'"
+                class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl">
+                &times;
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Choose role to login in:</h2>
+            <div class="flex flex-col gap-4">
+                <button onclick="window.location.href='{% url 'choose_role' 'employee' %}'"
+                    class="w-full py-3 text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg transition">
+                    Employee
+                </button>
+                <button onclick="window.location.href='{% url 'choose_role' 'office_admin' %}'"
+                    class="w-full py-3 text-white bg-green-600 hover:bg-green-700 font-semibold rounded-lg transition">
+                    Office Admin
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -150,8 +173,126 @@
             }
         };
 
-    </script>
+        document.getElementById('loginBtn').addEventListener('click', async function () {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
 
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            // 🔒 Basic frontend validation
+            if (!email || !password) {
+                showToast('warning', 'Please enter both email and password to sign in.');
+
+                // 👇 Intelligent focus logic
+                if (!email) {
+                    emailInput.focus();
+                } else {
+                    passwordInput.focus();
+                }
+                return;
+            }
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                showToast('warning', 'Please enter a valid email address.');
+                emailInput.focus(); // ✅ Move focus to email field
+                return;
+            }
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        // Check if cookie starts with the name
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrfToken = getCookie('csrftoken');
+
+            const res = await fetch("{% url 'login' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                if (data.role === 'hybrid') {
+                    document.getElementById('roleSelectModal').classList.remove('hidden');
+                } else {
+                    window.location.href = data.redirect_url;
+                }
+            } else {
+                showToast('error', data.message);
+            }
+        });
+    </script>
+    <!-- ✅ Toasts -->
+    <div id="toastSuccess"
+        class="fixed bottom-6 right-6 bg-green-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Success!
+    </div>
+
+    <div id="toastError"
+        class="fixed bottom-6 right-6 bg-red-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Error occurred!
+    </div>
+
+    <div id="toastWarning"
+        class="fixed bottom-6 right-6 bg-yellow-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ⚠️ Warning!
+    </div>
+
+    <script>
+        function showToast(type, message) {
+            const toastId = {
+                success: 'toastSuccess',
+                error: 'toastError',
+                warning: 'toastWarning'
+            }[type];
+
+            const toast = document.getElementById(toastId);
+            if (!toast) return;
+
+            toast.innerText = (type === 'success' ? '✅ ' : type === 'warning' ? '⚠️ ' : '❌ ') + message;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+    </script>
+    <style>
+        /* add this inside <style> tag or Tailwind config */
+        @keyframes fade-in-down {
+            0% {
+                opacity: 0;
+                transform: translateY(-0.5rem);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-down {
+            animation: fade-in-down 0.3s ease-out;
+        }
+    </style>
 </body>
 
 </html>
