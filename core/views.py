@@ -133,19 +133,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id
                 WHERE l.L_status = 'PENDING'
-                AND (
-                    -- Case when the logged-in user is an HR Admin
-                    ( 
-                        (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HR_ADMIN'
-                        AND (u.u_role = 'OFFICE_ADMIN' OR u.u_role = 'HYBRID')
-                    )
-                    OR 
-                    -- Case when the logged-in user is an Office Admin
-                    (
-                        (SELECT u_role FROM users WHERE user_id = {user_id}) = 'OFFICE_ADMIN'
-                        AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'HYBRID')
-                    )
-                );""")
+                AND (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HR_ADMIN';""")
             total_pending_leaves = cursor.fetchone()[0]
 
             # Total upcoming payroll (Sum of salaries)
@@ -187,8 +175,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 LEFT JOIN passport_details p ON p.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id  -- Joining the users table
                 WHERE e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID');  -- Filtering by role
-
+                
             """)
             for row in cursor.fetchall():
                 name = f"{row[0]} {row[1]}"
@@ -209,19 +196,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id
                 WHERE l.L_status = 'PENDING'
-                AND (
-                    -- Case when the logged-in user is an HR Admin
-                    ( 
-                        (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HR_ADMIN'
-                        AND (u.u_role = 'OFFICE_ADMIN' OR u.u_role = 'HYBRID')
-                    )
-                    OR 
-                    -- Case when the logged-in user is an Office Admin
-                    (
-                        (SELECT u_role FROM users WHERE user_id = {user_id}) = 'OFFICE_ADMIN'
-                        AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'HYBRID')
-                    )
-                );""")
+                AND (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HR_ADMIN';""")
             pending_count = cursor.fetchone()[0]
             if pending_count > 0:
                 notifications.append({
@@ -237,8 +212,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN users u ON e.user_id = u.user_id  -- Joining the users table
                 WHERE l.L_status IN ('APPROVED', 'REJECTED')
                 AND DATEDIFF(DAY, l_apply_date, GETDATE()) <= 7
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 full_name = f"{row[0]} {row[1]}"
@@ -262,8 +236,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN employees e ON p.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id  -- Joining the users table
                 WHERE DATEDIFF(DAY, p.date_generated, GETDATE()) <= 5
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 name = f"{row[0]} {row[1]}"
@@ -283,8 +256,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 SELECT MAX(p2.date_generated)
                 FROM payslips p2 WHERE p2.employee_id = p.employee_id
                 )
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 if row[2] and row[2] < 1500:
@@ -301,8 +273,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 LEFT JOIN employee_contact_details c ON c.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id  -- Joining the users table
                 WHERE (a.academic_id IS NULL OR c.employee_contact_id IS NULL)
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 notifications.append({
@@ -316,8 +287,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id  -- Joining the users table
                 WHERE DATEDIFF(DAY, GETDATE(), e.date_of_joining) BETWEEN 0 AND 7
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 notifications.append({
@@ -333,8 +303,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN users u ON e.user_id = u.user_id 
                 WHERE l.L_status = 'PENDING'
                 AND DATEDIFF(DAY, l.l_apply_date, GETDATE()) > 3
-                AND e.is_deleted = 0
-                AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID'); 
+                AND e.is_deleted = 0; 
             """)
             for row in cursor.fetchall():
                 notifications.append({
@@ -357,7 +326,7 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE l.L_status = 'PENDING' AND u.u_role IN ('OFFICE_ADMIN', 'HYBRID')
+                WHERE l.L_status = 'PENDING' 
                 ORDER BY l.L_start_date DESC
             """)
 
