@@ -140,10 +140,6 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips")
             total_upcoming_payroll = cursor.fetchone()[0]
 
-            # Number of unique designations (departments)
-            cursor.execute("SELECT COUNT(DISTINCT designation) FROM employees WHERE is_deleted = 0")
-            total_departments = cursor.fetchone()[0]
-
             # Get Profile Image (First Available)
             cursor.execute(f"""
                 SELECT profile_image 
@@ -347,7 +343,6 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
             "total_employees": total_employees,
             "total_pending_leaves": total_pending_leaves,
             "total_upcoming_payroll": total_upcoming_payroll,
-            "total_departments": total_departments,
             "profile_image": profile_image,
             "notifications":list(reversed(notifications)),
             "leave_status_list": leave_status_list

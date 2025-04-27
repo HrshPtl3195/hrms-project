@@ -80,10 +80,6 @@ class HRAdminDashboardView(HRAdminRequiredMixin, View):
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips")
             total_upcoming_payroll = cursor.fetchone()[0]
 
-            # Number of unique designations (departments)
-            cursor.execute("SELECT COUNT(DISTINCT designation) FROM employees WHERE is_deleted = 0")
-            total_departments = cursor.fetchone()[0]
-
             # Get Profile Image (First Available)
             cursor.execute(f"""
                 SELECT profile_image 
@@ -287,7 +283,6 @@ class HRAdminDashboardView(HRAdminRequiredMixin, View):
             "total_employees": total_employees,
             "total_pending_leaves": total_pending_leaves,
             "total_upcoming_payroll": total_upcoming_payroll,
-            "total_departments": total_departments,
             "profile_image": profile_image,
             "notifications":list(reversed(notifications)),
             "leave_status_list": leave_status_list
@@ -701,13 +696,12 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
 
             # Get filters
             search_query = request.GET.get("q", "")
-            department_id = request.GET.get("department_id")
             page_number = int(request.GET.get("page", 1))
             page_size = 5
 
             # Fetch data
             employee_list, total_count, start, end = self.get_all_employees(
-                request.user.user_id, search_query, department_id, page_number, page_size
+                request.user.user_id, search_query, page_number, page_size
             )
 
             paginator = Paginator(range(total_count), page_size)
@@ -750,21 +744,13 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
             profile_image = cursor.fetchone()
             profile_image = profile_image[0] if profile_image else None
 
-            cursor.execute("""
-                SELECT department_id, name 
-                FROM departments 
-                WHERE is_active = 1 AND LOWER(name) != 'hr'
-                ORDER BY name
-            """)
-            departments = cursor.fetchall()
 
         return {
             "user_name": user_name,
             "profile_image": profile_image,
-            "department_list": [{"id": d[0], "name": d[1]} for d in departments]
         }
 
-    def get_all_employees(self, user_id, search_query="", department_id=None, page=1, page_size=5):
+    def get_all_employees(self, user_id, search_query="", page=1, page_size=5):
         with connection.cursor() as cursor:
             sql = """
                 SELECT 
@@ -774,7 +760,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining,
                     od.profile_image,
 
@@ -788,7 +773,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN employee_contact_details cd ON e.employee_id = cd.employee_id
                 WHERE 
                     e.is_deleted = 0
@@ -796,10 +780,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                     AND u.user_id != %s
             """
             params = [user_id]
-
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             if search_query:
                 sql += """ AND (
@@ -831,16 +811,15 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                 "name": full_name,
                 "email": row[4],
                 "designation": row[5],
-                "department": row[6],
-                "joining_date": row[7].strftime("%b %d, %Y") if row[7] else "N/A",
-                "profile_image": row[8] or "default.png",
+                "joining_date": row[6].strftime("%b %d, %Y") if row[6] else "N/A",
+                "profile_image": row[7] or "default.png",
                 "contact": {
-                    "current_email": row[9] or "",
-                    "current_phone": row[10] or "",
-                    "permanent_email": row[11] or "",
-                    "permanent_phone": row[12] or "",
-                    "current_address": row[13] or "",
-                    "permanent_address": row[14] or "",
+                    "current_email": row[8] or "",
+                    "current_phone": row[9] or "",
+                    "permanent_email": row[10] or "",
+                    "permanent_phone": row[11] or "",
+                    "current_address": row[12] or "",
+                    "permanent_address": row[13] or "",
                 }
             })
 
@@ -877,7 +856,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                         request.POST.get("current_address"),
                         request.POST.get("permanent_address"),
                         None,  # designation
-                        None,  # department_id
                         None   # joining_date
                     ])
                 elif section == "job":
@@ -886,7 +864,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
                         section,
                         None, None, None, None, None, None,
                         request.POST.get("new_designation"),
-                        request.POST.get("department"),
                         request.POST.get("new_joining_date")
                     ])
                 else:
@@ -902,7 +879,6 @@ class EmployeeManagementView(HRAdminRequiredMixin, TemplateView):
 class EmployeeSearchView(HRAdminRequiredMixin, View):
     def get(self, request):
         search_query = request.GET.get("q", "").strip().lower()
-        department_id = request.GET.get("department_id")
         page_number = int(request.GET.get("page", 1))
         page_size = 5
 
@@ -915,7 +891,6 @@ class EmployeeSearchView(HRAdminRequiredMixin, View):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining,
                     od.profile_image,
 
@@ -929,16 +904,10 @@ class EmployeeSearchView(HRAdminRequiredMixin, View):
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN employee_contact_details cd ON e.employee_id = cd.employee_id
                 WHERE e.is_deleted = 0 AND u.u_role != 'HR_ADMIN' AND u.user_id != %s
             """
             params = [request.user.user_id]
-
-            # Department filter
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             # Enhanced Search Logic
             if search_query:
@@ -999,16 +968,15 @@ class EmployeeSearchView(HRAdminRequiredMixin, View):
                 "name": full_name,
                 "email": row[4],
                 "designation": row[5],
-                "department": row[6],
-                "joining_date": row[7].strftime("%b %d, %Y") if row[7] else "N/A",
-                "profile_image": row[8] or "default.png",
+                "joining_date": row[6].strftime("%b %d, %Y") if row[6] else "N/A",
+                "profile_image": row[7] or "default.png",
                 "contact": {
-                    "current_email": row[9] or "",
-                    "current_phone": row[10] or "",
-                    "permanent_email": row[11] or "",
-                    "permanent_phone": row[12] or "",
-                    "current_address": row[13] or "",
-                    "permanent_address": row[14] or "",
+                    "current_email": row[8] or "",
+                    "current_phone": row[9] or "",
+                    "permanent_email": row[10] or "",
+                    "permanent_phone": row[11] or "",
+                    "current_address": row[12] or "",
+                    "permanent_address": row[13] or "",
                 }
             })
 
@@ -1025,7 +993,6 @@ class EmployeeSearchView(HRAdminRequiredMixin, View):
 class EmployeeExportView(HRAdminRequiredMixin, View):
     def get(self, request):
         search_query = request.GET.get("q", "")
-        department_id = request.GET.get("department_id")
         export_format = request.GET.get("format", "excel")
 
         with connection.cursor() as cursor:
@@ -1036,18 +1003,12 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 WHERE e.is_deleted = 0 AND u.u_role != 'HR_ADMIN' AND u.user_id != %s
             """
             params = [request.user.user_id]
-
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             if search_query:
                 sql += " AND (LOWER(e.first_name) LIKE LOWER(%s) OR LOWER(e.last_name) LIKE LOWER(%s) OR LOWER(u.email) LIKE LOWER(%s))"
@@ -1065,7 +1026,7 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
             ws = wb.active
             ws.title = "Employees"
 
-            headers = ["Full Name", "Email", "Designation", "Department", "Joining Date"]
+            headers = ["Full Name", "Email", "Designation", "Joining Date"]
             ws.append(headers)
 
             for row in rows:
@@ -1074,8 +1035,7 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5],  # department
-                    row[6].strftime("%b %d, %Y") if row[6] else ""
+                    row[5].strftime("%b %d, %Y") if row[5] else ""
                 ])
 
             response = HttpResponse(
@@ -1103,7 +1063,7 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
             elements.append(Spacer(1, 12))
 
             # Table Data
-            table_data = [["Full Name", "Email", "Designation", "Department", "Joining Date"]]
+            table_data = [["Full Name", "Email", "Designation", "Joining Date"]]
 
             for row in rows:
                 full_name = f"{row[0]} {row[1]} {row[2]}".strip()
@@ -1112,7 +1072,6 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5],  # department
                     joining_date
                 ])
 
@@ -1206,16 +1165,10 @@ class AddEmployeeView(LoginRequiredMixin, TemplateView):
             """)
             profile_image = cursor.fetchone()
             profile_image = profile_image[0] if profile_image else None
-            
-            cursor.execute("SELECT department_id, name FROM departments WHERE is_active = 1 ORDER BY name")
-            departments = cursor.fetchall()
-
-            department_list = [{"department_id": row[0], "name": row[1]} for row in departments]
 
         return {
             "user_name": user_name,
             "profile_image": profile_image,
-            "department_list": department_list
         }
     
     def post(self, request):
@@ -1347,7 +1300,6 @@ class AddEmployeeView(LoginRequiredMixin, TemplateView):
         # Current Job Details
         dateOfJoining = request.POST.get("dateOfJoining")
         designation = request.POST.get("designation")
-        department = request.POST.get("department")
         
         date_fields = ["passportIssueDate", "passportExpiryDate", "prInforceFrom", 
                "prExpiryDate", "sinIssueDate", "sinExpiryDate", 
@@ -1526,7 +1478,6 @@ class AddEmployeeView(LoginRequiredMixin, TemplateView):
                 ,criminalRecord
                 ,dateOfJoining
                 ,designation
-                ,department
                 
                 ,currentAddress
                 ,permanentAddress
@@ -2029,11 +1980,9 @@ class PayrollView(LoginRequiredMixin, TemplateView):
                 SELECT 
                     e.employee_id,
                     CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
                     od.profile_image
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
                 WHERE 
                     e.is_deleted = 0
@@ -2047,8 +1996,7 @@ class PayrollView(LoginRequiredMixin, TemplateView):
         return [{
             "employee_id": row[0],
             "full_name": row[1],
-            "department": row[2] or "N/A",
-            "profile_image": row[3] or "default.png"
+            "profile_image": row[2] or "default.png"
         } for row in rows]
 
     def get_all_payslips(self, page, page_size, user_id):
@@ -2058,7 +2006,6 @@ class PayrollView(LoginRequiredMixin, TemplateView):
                     p.payslip_id,
                     p.employee_id,
                     CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
                     e.designation,
                     p.salary,
                     (p.project_bonus + p.leadership_bonus) AS bonuses,
@@ -2068,7 +2015,6 @@ class PayrollView(LoginRequiredMixin, TemplateView):
                     ISNULL(od.profile_image, 'default.png') AS profile_image
                 FROM payslips p
                 JOIN employees e ON p.employee_id = e.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
                 WHERE p.generated_by = {user_id}
             """
@@ -2097,14 +2043,13 @@ class PayrollView(LoginRequiredMixin, TemplateView):
                 "payslip_id": row[0],
                 "employee_id": row[1],
                 "name": row[2].strip(),
-                "department": row[3],
-                "designation": row[4],
-                "base_salary": float(row[5]),
-                "bonuses": float(row[6]),
-                "total": float(row[7]),
-                "period": row[8].strftime("%b %Y"),
-                "pay_date": row[9].strftime("%d %b %Y"),
-                "profile_image": row[10],
+                "designation": row[3],
+                "base_salary": float(row[4]),
+                "bonuses": float(row[5]),
+                "total": float(row[6]),
+                "period": row[7].strftime("%b %Y"),
+                "pay_date": row[8].strftime("%d %b %Y"),
+                "profile_image": row[9],
             })
 
         start = (page - 1) * page_size + 1
@@ -2180,7 +2125,6 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
             cursor.execute(f"""
                 SELECT 
                     CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
                     e.designation,
                     p.salary,
                     (p.project_bonus + p.leadership_bonus) AS bonuses,
@@ -2189,7 +2133,6 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
                     p.pay_date
                 FROM payslips p
                 JOIN employees e ON p.employee_id = e.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 WHERE p.generated_by = {request.user.user_id}
                 ORDER BY p.date_generated DESC
             """)
@@ -2201,19 +2144,18 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
             ws = wb.active
             ws.title = "Payslips"
 
-            headers = ["Employee", "Department", "Designation", "Gross Salary", "Bonuses", "Net Pay", "Period", "Pay Date"]
+            headers = ["Employee", "Designation", "Gross Salary", "Bonuses", "Net Pay", "Period", "Pay Date"]
             ws.append(headers)
 
             for row in rows:
                 ws.append([
                     row[0],  # full name
-                    row[1] or "N/A",  # department
-                    row[2] or "N/A",  # designation
-                    float(row[3]),   # salary
-                    float(row[4]),   # bonuses
-                    float(row[5]),   # net pay
-                    row[6].strftime("%b %Y") if row[6] else "",
-                    row[7].strftime("%d %b %Y") if row[7] else ""
+                    row[1] or "N/A",  # designation
+                    float(row[2]),   # salary
+                    float(row[3]),   # bonuses
+                    float(row[4]),   # net pay
+                    row[5].strftime("%b %Y") if row[5] else "",
+                    row[6].strftime("%d %b %Y") if row[6] else ""
                 ])
 
             response = HttpResponse(
@@ -2235,18 +2177,17 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
             elements.append(Paragraph("Payroll Summary", styles["Title"]))
             elements.append(Spacer(1, 12))
 
-            table_data = [["Employee", "Department", "Designation", "Gross", "Bonus", "Net", "Period", "Pay Date"]]
+            table_data = [["Employee", "Designation", "Gross", "Bonus", "Net", "Period", "Pay Date"]]
 
             for row in rows:
                 table_data.append([
                     row[0],
                     row[1] or "N/A",
-                    row[2] or "N/A",
+                    f"${float(row[2]):,.2f}",
                     f"${float(row[3]):,.2f}",
                     f"${float(row[4]):,.2f}",
-                    f"${float(row[5]):,.2f}",
-                    row[6].strftime("%b %Y") if row[6] else "",
-                    row[7].strftime("%d %b %Y") if row[7] else ""
+                    row[5].strftime("%b %Y") if row[5] else "",
+                    row[6].strftime("%d %b %Y") if row[6] else ""
                 ])
 
             table = Table(table_data, repeatRows=1)
