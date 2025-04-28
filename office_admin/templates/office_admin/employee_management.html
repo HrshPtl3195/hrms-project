@@ -51,11 +51,6 @@
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Approvals</span>
                 </a>
-                <a href="{% url 'office_payroll' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-money-bill-wave w-5"></i>
-                    <span class="ml-3">Payroll Management</span>
-                </a>
                 <a href="{% url 'office_leave_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
@@ -98,16 +93,6 @@
                                 <i class="fas fa-search absolute left-3 top-3 text-gray-600"></i>
                             </div>
                             <div>
-                                <select id="department" name="department_id"
-                                    class="bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 w-48">
-                                    <option value="">All Departments</option>
-                                    {% for dept in department_list %} <option value="{{ dept.id }}" 
-                                    {% if request.GET.department_id == dept.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ dept.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
                                 <button id="clearFilterBtn"
                                     class="rounded-lg px-4 py-2  bg-gray-300 rounded hover:bg-gray-400">
                                     Clear Filters
@@ -128,7 +113,6 @@
                                 <tr>
                                     <th class="px-4 py-3 text-left">Employee</th>
                                     <th class="px-4 py-3 text-left">Email</th>
-                                    <th class="px-4 py-3 text-left">Department</th>
                                     <th class="px-4 py-3 text-left">Designation</th>
                                     <th class="px-4 py-3 text-left">Joining Date</th>
                                     <th class="px-4 py-3 text-right">Actions</th>
@@ -145,7 +129,6 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700">{{ emp.email }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-700">{{ emp.department }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700">{{ emp.designation }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700">{{ emp.joining_date }}</td>
                                     <td class="px-4 py-3 text-right space-x-2">
@@ -153,7 +136,6 @@
                                             data-emp-id="{{ emp.employee_id }}"
                                             data-name="{{ emp.name }}"
                                             data-email="{{ emp.email }}"
-                                            data-department="{{ emp.department }}"
                                             data-designation="{{ emp.designation }}"
                                             data-joining="{{ emp.joining_date }}"
                                             data-image="{{ emp.profile_image }}"
@@ -190,19 +172,19 @@
                             {% if page_obj.paginator.num_pages > 1 %}
                             <div class="flex space-x-2 pagination">
                                 {% if page_obj.has_previous %}
-                                <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}"
                                     class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
                                 {% endif %}
 
                                 {% for num in page_obj.paginator.page_range %}
-                                <a href="?page={{ num }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                <a href="?page={{ num }}&q={{ request.GET.q }}"
                                     class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
                                     {{ num }}
                                 </a>
                                 {% endfor %}
 
                                 {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}"
                                     class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
                                 {% endif %}
                             </div>
@@ -382,11 +364,9 @@
 
         function handleDownload(format) {
             const query = document.getElementById("searchTab").value;
-            const departmentId = document.getElementById("department").value;
 
             const url = new URL("{% url 'office_employee_export' %}", window.location.origin);
             if (query) url.searchParams.append("q", query);
-            if (departmentId) url.searchParams.append("department_id", departmentId);
             url.searchParams.append("format", format);
 
             const buttonId = format.toLowerCase() === "pdf" ? "downloadPDFBtn" : "downloadExcelBtn";
@@ -461,13 +441,11 @@
                         showDeleteToast("success");
                         // Clear filters and load the original list
                         searchInput.value = "";
-                        departmentDropdown.value = "";
                         performSearch(1); // Load the first page of the original list
                     } else {
                         showDeleteToast("error");
                         // Reset to the original list after a failed deletion as well
                         searchInput.value = "";
-                        departmentDropdown.value = "";
                         performSearch(1);
                     }
                 })
@@ -476,7 +454,6 @@
                     showDeleteToast("error");
                     // Reset to the original list even if there's an error
                     searchInput.value = "";
-                    departmentDropdown.value = "";
                     performSearch(1);
                 });
         });
@@ -484,11 +461,9 @@
     <script>
         function downloadEmployees(format) {
             const query = document.getElementById("searchTab").value;
-            const departmentId = document.getElementById("department").value;
 
             const url = new URL("{% url 'office_employee_export' %}", window.location.origin);
             if (query) url.searchParams.append("q", query);
-            if (departmentId) url.searchParams.append("department_id", departmentId);
             url.searchParams.append("format", format);
         }
 
@@ -527,7 +502,6 @@
     </script>
     <script>
         const searchInput = document.getElementById("searchTab");
-        const departmentDropdown = document.getElementById("department");
         const tableBody = document.querySelector("tbody");
 
         function renderEmployees(employees) {
@@ -552,7 +526,6 @@
                         </div>
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-700">${emp.email}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">${emp.department}</td>
                     <td class="px-4 py-3 text-sm text-gray-700">${emp.designation}</td>
                     <td class="px-4 py-3 text-sm text-gray-700">${emp.joining_date}</td>
                     <td class="px-4 py-3 text-right space-x-2">
@@ -560,7 +533,6 @@
                             data-emp-id="${emp.employee_id}"
                             data-name="${emp.name}"
                             data-email="${emp.email}"
-                            data-department="${emp.department}"
                             data-designation="${emp.designation}"
                             data-joining="${emp.joining_date}"
                             data-image="${emp.profile_image}"
@@ -651,14 +623,10 @@
 
         function performSearch(pageNumber = 1) {
             const query = searchInput.value.trim();
-            const deptId = departmentDropdown.value;
 
             const url = new URL("{% url 'office_employee_search' %}", window.location.origin);
             url.searchParams.append("q", query);
             url.searchParams.append("page", pageNumber);
-            if (deptId) {
-                url.searchParams.append("department_id", deptId);
-            }
 
             fetch(url)
                 .then(res => res.json())
@@ -673,17 +641,14 @@
 
         // Event listeners for live typing and department change
         searchInput.addEventListener("input", debounce(() => performSearch(1), 300));
-        departmentDropdown.addEventListener("change", () => performSearch(1));
 
 
         // Clear search and filter
         function clearFilters() {
             const searchInput = document.getElementById("searchTab");
-            const departmentDropdown = document.getElementById("department");
 
             // Reset input values
             searchInput.value = "";
-            departmentDropdown.value = "";
 
             // Perform the search with default parameters (page 1, no filters)
             performSearch(1);
@@ -802,15 +767,6 @@
                                 <input type="date" name="new_joining_date" id="emp_new_joining_date" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2" />
                             </div>
                         </div>
-            
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Department</label>
-                            <select name="department" id="emp_new_department" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2">
-                                {% for dept in department_list %}
-                                <option value="{{ dept.id }}">{{ dept.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                     </div>
                 </div>
             
@@ -839,7 +795,6 @@
             const empId = btn.dataset.empId;  // Correct employee_id dynamically passed from the button
             const name = btn.dataset.name;
             const email = btn.dataset.email;
-            const department = btn.dataset.department;
             const designation = btn.dataset.designation;
             const joinDate = btn.dataset.joining;
             const profileImg = btn.dataset.image || "default.png";
@@ -848,7 +803,7 @@
             document.getElementById("editEmpPhoto").src = `/media/${profileImg}`;
             document.getElementById("editEmpName").textContent = name;
             document.getElementById("editEmpEmail").textContent = email;
-            document.getElementById("editEmpMeta").textContent = `${department} • ${designation} • Joined: ${joinDate}`;
+            document.getElementById("editEmpMeta").textContent = `${designation} • Joined: ${joinDate}`;
 
             // Set the contact info form fields
             document.getElementById("emp_current_email").value = btn.dataset.currentEmail || "";

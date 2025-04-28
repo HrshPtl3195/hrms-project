@@ -5,7 +5,7 @@ from .views import (
     HRAdminDashboardView, HRAdminProfileView, EmployeeManagementView,
     LeaveApprovalView, PayrollView, AddEmployeeView, LogoutView, AccessDeniedView,
     LeaveActionView, EmployeeSearchView, EmployeeExportView, EmployeeDeleteView,
-    LeaveExportView, GeneratePayslipsView, ExportPayslipsView
+    LeaveExportView, GeneratePayslipsView, ExportPayslipsView, DownloadPayslipPDFView
 )
 
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     path('payroll/', PayrollView.as_view(), name='hr_payroll'),
     path("generate-payslips/", GeneratePayslipsView.as_view(), name="generate_payslipsH"),
     path("payroll/export/", ExportPayslipsView.as_view(), name="export_payslips"),
+    path('mypayroll/download/', DownloadPayslipPDFView.as_view(), name='hr_download_my_payslip'),
     path('add-employee/', AddEmployeeView.as_view(), name='hr_add_employee'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('access-denied/', AccessDeniedView.as_view(), name='access_denied'),

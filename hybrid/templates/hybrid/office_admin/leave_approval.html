@@ -51,11 +51,6 @@
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Approvals</span>
                 </a>
-                <a href="{% url 'hybrid_office_admin_payroll' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-money-bill-wave w-5"></i>
-                    <span class="ml-3">Payroll Management</span>
-                </a>
                 <a href="{% url 'hybrid_office_admin_leave_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
@@ -155,8 +150,6 @@
                                                 To</th>
                                             <th class="px-4 py-3 text-left">
                                                 Status</th>
-                                            <th class="px-4 py-3 text-left">
-                                                Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-700">
@@ -183,24 +176,6 @@
                                                     {{ leave.status|title }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <div class="flex space-x-2">
-                                                    {% if leave.status == "PENDING" %}
-                                                    <button
-                                                        onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.employee_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', '{{ leave.reason }}')"
-                                                        class="p-2 text-green-500 hover:bg-green-500 hover:bg-opacity-20 rounded">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                    <button
-                                                        onclick="openLeaveModal('{{ leave.leave_id }}', '{{ leave.employee_name }}', '{{ leave.leave_type }}', '{{ leave.start_date }}', '{{ leave.end_date }}', '{{ leave.reason }}')"
-                                                        class="p-2 text-red-500 hover:bg-red-500 hover:bg-opacity-20 rounded">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                    {% else %}
-                                                    <span class="text-sm text-gray-400 italic">No action</span>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -221,19 +196,19 @@
                                 {% if page_obj.paginator.num_pages > 1 %}
                                 <div class="flex space-x-2 pagination">
                                     {% if page_obj.has_previous %}
-                                    <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
                                     {% endif %}
                             
                                     {% for num in page_obj.paginator.page_range %}
-                                    <a href="?page={{ num }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    <a href="?page={{ num }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
                                         {{ num }}
                                     </a>
                                     {% endfor %}
                             
                                     {% if page_obj.has_next %}
-                                    <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&department_id={{ request.GET.department_id }}"
+                                    <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
                                     {% endif %}
                                 </div>
@@ -268,36 +243,6 @@
         </div>
     </div>
 
-    <!-- ✅ Leave Action Modal -->
-    <div id="leaveModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-lg w-full max-w-md mx-auto p-6 relative shadow-xl animate-fade-in">
-            <button onclick="closeModal()"
-                class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
-            <h3 class="text-xl font-semibold mb-4 text-center">Leave Request Details</h3>
-            <div class="space-y-3 text-sm text-gray-700 leading-relaxed">
-                <div>Employee:<strong> <span id="modalEmpName" class="ml-1"></span></strong></div>
-                <div>Leave Type:<strong> <span id="modalType" class="ml-1"></span></strong></div>
-                <div>Start Date:<strong> <span id="modalStart" class="ml-1"></span></strong></div>
-                <div>End Date:<strong> <span id="modalEnd" class="ml-1"></span></strong></div>
-                <div>Reason:<strong> <span id="modalReason" class="ml-1"></span></strong></div>
-            </div>
-            <div class="mt-6 flex justify-between">
-                <button id="approveBtn" onclick="processLeaveAction('APPROVED')"
-                    class="w-1/2 mr-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded flex justify-center items-center">
-                    <span class="btn-label">Approve</span>
-                    <span
-                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                </button>
-                <button id="rejectBtn" onclick="processLeaveAction('REJECTED')"
-                    class="w-1/2 ml-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex justify-center items-center">
-                    <span class="btn-label">Reject</span>
-                    <span
-                        class="spinner hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- ✅ Success Toast -->
     <div id="downloadSuccessToast"
         class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
@@ -309,60 +254,7 @@
         class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
         ❌ Failed to download file. Please try again.
     </div>
-    <!-- ✅ Toast Message -->
-    <script>
-        let selectedLeaveId = null;
-
-        function openLeaveModal(id, name, type, start, end, reason) {
-            selectedLeaveId = id;
-            document.getElementById("modalEmpName").textContent = name;
-            document.getElementById("modalType").textContent = type;
-            document.getElementById("modalStart").textContent = start;
-            document.getElementById("modalEnd").textContent = end;
-            document.getElementById("modalReason").textContent = reason;
-            document.getElementById("leaveModal").classList.remove("hidden");
-        }
-
-        function closeModal() {
-            document.getElementById("leaveModal").classList.add("hidden");
-        }
-
-        function processLeaveAction(action) {
-            const btn = action === 'APPROVED' ? document.getElementById("approveBtn") : document.getElementById("rejectBtn");
-            btn.querySelector('.btn-label').textContent = "Processing...";
-            btn.querySelector('.spinner').classList.remove("hidden");
-            btn.disabled = true;
-
-            fetch("{% url 'hybrid_office_admin_leave_action' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: `leave_id=${selectedLeaveId}&action=${action}`
-            })
-                .then(res => res.json())
-                .then(data => {
-                    localStorage.setItem("leaveActionStatus", action);
-                    location.reload();
-                });
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const status = localStorage.getItem("leaveActionStatus");
-            if (status) {
-                const toast = document.createElement("div");
-                toast.className = "fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg z-50 text-white";
-                toast.classList.add(status === "APPROVED" ? "bg-green-300" : "bg-red-300");
-                toast.innerHTML = status === "APPROVED" ? "✅ Leave approved!" : "❌ Leave rejected!";
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.remove();
-                    localStorage.removeItem("leaveActionStatus");
-                }, 3000);
-            }
-        });
-    </script>
+    
     <script>
         function openDownloadModal() {
             document.getElementById("downloadModal").classList.remove("hidden");

@@ -52,11 +52,6 @@
                     <i class="fas fa-calendar-check w-5"></i>
                     <span class="ml-3">Leave Approvals</span>
                 </a>
-                <a href="{% url 'hybrid_office_admin_payroll' %}"
-                    class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
-                    <i class="fas fa-money-bill-wave w-5"></i>
-                    <span class="ml-3">Payroll Management</span>
-                </a>
                 <a href="{% url 'hybrid_office_admin_leave_management' %}"
                     class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-200">
                     <i class="fas fa-calendar-check w-5"></i>
@@ -127,22 +122,7 @@
                                         <option>Other</option>
                                     </select>
                                 </div>
-                                <div class="space-y-3 ">
-                                    <label class="block text-sm font-medium text-gray-600">Criminal Record <span
-                                            class="text-red-500">*</span></label>
-                                    <div class="flex items-center space-x-4">
-                                        <label for="criminalRecordYes" class="flex items-center">
-                                            <input type="radio" id="criminalRecordYes" name="criminalRecord" value="yes"
-                                                class="form-radio text-blue-500">
-                                            <span class="ml-2">Yes</span>
-                                        </label>
-                                        <label for="criminalRecordNo" class="flex items-center">
-                                            <input type="radio" id="criminalRecordNo" name="criminalRecord" value="no"
-                                                class="form-radio text-blue-500" checked>
-                                            <span class="ml-2">No</span>
-                                        </label>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
 
@@ -167,25 +147,19 @@
                                     class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
                                 <p id="nationalityWarning" class="text-red-500 text-sm hidden"></p>
                             </div>
-
-                            <div class="space-y-3">
-                                <label class="block text-sm font-medium text-gray-600">User Role <span
+                            <div class="space-y-3 ">
+                                <label class="block text-sm font-medium text-gray-600">Criminal Record <span
                                         class="text-red-500">*</span></label>
                                 <div class="flex items-center space-x-4">
-                                    <label for="userRoleOA" class="flex items-center">
-                                        <input type="radio" id="userRoleOA" name="userRole" value="OA"
+                                    <label for="criminalRecordYes" class="flex items-center">
+                                        <input type="radio" id="criminalRecordYes" name="criminalRecord" value="yes"
+                                            class="form-radio text-blue-500">
+                                        <span class="ml-2">Yes</span>
+                                    </label>
+                                    <label for="criminalRecordNo" class="flex items-center">
+                                        <input type="radio" id="criminalRecordNo" name="criminalRecord" value="no"
                                             class="form-radio text-blue-500" checked>
-                                        <span class="ml-2">Office Admin</span>
-                                    </label>
-                                    <label for="userRoleEM" class="flex items-center">
-                                        <input type="radio" id="userRoleEM" name="userRole" value="EM"
-                                            class="form-radio text-blue-500">
-                                        <span class="ml-2">Employee</span>
-                                    </label>
-                                    <label for="userRoleHY" class="flex items-center">
-                                        <input type="radio" id="userRoleHY" name="userRole" value="HY"
-                                            class="form-radio text-blue-500">
-                                        <span class="ml-2">Both</span>
+                                        <span class="ml-2">No</span>
                                     </label>
                                 </div>
                             </div>
@@ -351,16 +325,6 @@
                                         class="text-red-500">*</span></label>
                                 <input type="date" required id="dateOfJoining" name="dateOfJoining"
                                     class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-600">Department <span
-                                        class="text-red-500">*</span></label>
-                                <select required id="department" name="department"
-                                    class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom">
-                                    {% for dept in department_list %}
-                                    <option value="{{ dept.department_id }}">{{ dept.name }}</option>
-                                    {% endfor %}
-                                </select>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-600">Designation <span

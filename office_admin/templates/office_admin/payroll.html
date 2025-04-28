@@ -153,9 +153,7 @@
                                             <th class="px-4 py-3 text-left">
                                                 Employee</th>
                                             <th class="px-4 py-3 text-left">
-                                                Department</th>
-                                            <th class="px-4 py-3 text-left">
-                                                Position</th>
+                                                Designation</th>
                                             <th class="px-4 py-3 text-left">
                                                 Base Salary</th>
                                             <th class="px-4 py-3 text-left">
@@ -181,7 +179,6 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-3">{{ payslip.department|default:"N/A" }}</td>
                                             <td class="px-4 py-3">{{ payslip.designation|default:"N/A" }}</td>
                                             <td class="px-4 py-3">${{ payslip.base_salary }}</td>
                                             <td class="px-4 py-3">${{ payslip.bonuses }}</td>
@@ -253,10 +250,10 @@
                 {% for emp in employee_list %}
                 <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-100 cursor-pointer">
                     <input type="checkbox" class="emp-checkbox" value="{{ emp.employee_id }}"
-                        data-name="{{ emp.full_name }}" data-department="{{ emp.department }}">
+                        data-name="{{ emp.full_name }}" data-designation="{{ emp.designation }}">
                     <div>
                         <div class="font-semibold text-sm">{{ emp.full_name }}</div>
-                        <div class="text-xs text-gray-600">ID: EMP{{ emp.employee_id }} • {{ emp.department }}</div>
+                        <div class="text-xs text-gray-600">ID: EMP{{ emp.employee_id }} • {{ emp.designation }}</div>
                     </div>
                 </label>
                 {% endfor %}

@@ -1,4 +1,4 @@
-import pyodbc, os, openpyxl, logging, json
+import pyodbc, os, openpyxl, logging, json, base64, pdfkit
 from datetime import date
 from PIL import Image
 from django.contrib.auth.hashers import make_password
@@ -11,7 +11,7 @@ from django.views.generic import TemplateView, RedirectView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.cache import add_never_cache_headers
 from django.http import JsonResponse
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -1980,7 +1980,8 @@ class PayrollView(LoginRequiredMixin, TemplateView):
                 SELECT 
                     e.employee_id,
                     CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    od.profile_image
+                    od.profile_image,
+                    e.designation
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
@@ -1996,7 +1997,8 @@ class PayrollView(LoginRequiredMixin, TemplateView):
         return [{
             "employee_id": row[0],
             "full_name": row[1],
-            "profile_image": row[2] or "default.png"
+            "profile_image": row[2] or "default.png",
+            "designation": row[3]
         } for row in rows]
 
     def get_all_payslips(self, page, page_size, user_id):
@@ -2206,6 +2208,238 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
             return response
 
 
+class DownloadPayslipPDFView(HRAdminRequiredMixin, TemplateView):
+    def post(self, request):
+        employee_id = request.POST.get('employee_id')
+        payslip_id = request.POST.get('payslip_id')
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                    SELECT user_id
+                    FROM employees
+                    WHERE employee_id = %s
+                """, [employee_id])
+            user_id = cursor.fetchone()[0]
+        
+        if not employee_id:
+            return HttpResponseBadRequest("Employee ID is required.")
+        
+        current_year = date.today().year
+
+        # Fetch employee core info
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT e.employee_id, e.first_name, e.middle_name, e.last_name
+                FROM employees e
+                WHERE e.user_id = %s
+            """, [user_id])
+            emp = cursor.fetchone()
+            emp_id, first, middle, last = emp
+            full_name = f"{first} {middle or ''} {last}".strip()
+            emp_code = f"E{emp_id}"
+
+            # Fetch address
+            cursor.execute("SELECT current_address FROM employee_contact_details WHERE employee_id = %s", [emp_id])
+            address_row = cursor.fetchone()
+            address = address_row[0] if address_row else "N/A"
+
+            # Latest payslip (for current month)
+            cursor.execute("""
+                SELECT regular_income, project_bonus, leadership_bonus,
+                       cpp, ei, income_tax, net_pay, pay_date
+                FROM payslips
+                WHERE employee_id = %s AND YEAR(period_ending) = %s AND payslip_id = %s
+                ORDER BY pay_date DESC
+            """, [emp_id, current_year, payslip_id])
+            latest = cursor.fetchone()
+            
+            reg, proj, lead, cpp, ei, it, net, pay_date = latest if latest else (0, 0, 0, 0, 0, 0, 0, date.today())
+
+            # 🧮 YTD Deductions from payslips
+            cursor.execute("""
+                SELECT ISNULL(SUM(cpp), 0), ISNULL(SUM(ei), 0), ISNULL(SUM(income_tax), 0)
+                FROM payslips
+                WHERE employee_id = %s AND YEAR(period_ending) = %s AND payslip_id = %s
+            """, [emp_id, current_year, payslip_id])
+            ytd_cpp, ytd_ei, ytd_it = cursor.fetchone()
+
+            # 🧮 YTD Gross, Deductions, Net from payroll_summary
+            cursor.execute("""
+                SELECT ISNULL(SUM(gross), 0), ISNULL(SUM(cpp + ei + income_tax), 0), ISNULL(SUM(net), 0)
+                FROM payroll_summary
+                WHERE employee_id = %s AND year = %s AND payslip_id = %s
+            """, [emp_id, current_year, payslip_id])
+            ytd_gross, ytd_deductions, ytd_net = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT month_name, 
+                    ISNULL(gross, 0), ISNULL(income_tax, 0), ISNULL(cpp, 0), ISNULL(ei, 0), ISNULL(net, 0)
+                FROM payroll_summary
+                WHERE employee_id = %s AND year = %s AND payslip_id = %s
+            """, [emp_id, current_year, payslip_id])
+            monthly_data = cursor.fetchall()
+
+        # Initialize month map
+        month_names = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+        month_summary = {m: {"gross": "", "it": "", "cpp": "", "ei": "", "ded": "", "net": ""} for m in month_names}
+
+        # Fill data into dict
+        for row in monthly_data:
+            mname = row[0].upper()
+            gross, it, cpp, ei, net = row[1:]
+            if mname in month_summary:
+                ded = it + cpp + ei
+                month_summary[mname] = {
+                    "gross": f"{gross:,.2f}" if gross else "",
+                    "it": f"{it:,.2f}" if it else "",
+                    "cpp": f"{cpp:,.2f}" if cpp else "",
+                    "ei": f"{ei:,.2f}" if ei else "",
+                    "ded": f"{ded:,.2f}" if ded else "",
+                    "net": f"{net:,.2f}" if net else "",
+                }
+
+        # Calculate totals
+        total = {"gross": 0, "it": 0, "cpp": 0, "ei": 0, "ded": 0, "net": 0}
+        for m in month_summary.values():
+            total["gross"] += float(m["gross"].replace(",", "") or 0)
+            total["it"] += float(m["it"].replace(",", "") or 0)
+            total["cpp"] += float(m["cpp"].replace(",", "") or 0)
+            total["ei"] += float(m["ei"].replace(",", "") or 0)
+            total["ded"] += float(m["ded"].replace(",", "") or 0)
+            total["net"] += float(m["net"].replace(",", "") or 0)
+
+        # 📄 Generate salary history table rows
+        page2_rows = ""
+        for m in month_names:
+            row = month_summary[m]
+            page2_rows += f"""
+                <tr>
+                    <td>{m}</td>
+                    <td>{row['gross']}</td>
+                    <td>{row['it']}</td>
+                    <td>{row['cpp']}</td>
+                    <td>{row['ei']}</td>
+                    <td>{row['ded']}</td>
+                    <td>{row['net']}</td>
+                </tr>
+            """
+
+        # Final row for totals
+        page2_rows += f"""
+            <tr style="background-color: yellow;">
+                <td>TOTAL</td>
+                <td>{total['gross']:,.2f}</td>
+                <td>{total['it']:,.2f}</td>
+                <td>{total['cpp']:,.2f}</td>
+                <td>{total['ei']:,.2f}</td>
+                <td>{total['ded']:,.2f}</td>
+                <td>{total['net']:,.2f}</td>
+            </tr>
+        """
+
+        # ✅ Convert logo
+        image_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'aureus.png')
+        with open(image_path, "rb") as img_file:
+            b64_image = base64.b64encode(img_file.read()).decode("utf-8")
+
+        # ✅ Construct HTML
+        html_string = f"""
+        <!DOCTYPE html>
+        <html><head><meta charset="UTF-8" />
+        <style>
+            body {{ margin: 0; padding: 20px; font-family: Arial; font-size: 14px; }}
+            .header {{ display: flex; justify-content: space-between; margin-bottom: -20px; }}
+            .logo img {{ height: 80px; margin-top: 50px; }}
+            .company-details {{ text-align: right; margin-top: -80px; line-height: 1.5; }}
+            .paystub-title {{ background: #444; color: white; text-align: center; padding: 5px; font-weight: bold; margin: 20px 0 5px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }}
+            th, td {{ border: 1px solid #ccc; padding: 6px; }}
+            th {{ background: #f4f4f4; }}
+            .red {{ color: red; font-weight: bold; }}
+            .text-left {{ text-align: left; padding-left: 8px; }}
+        </style>
+        </head><body>
+
+        <div class="header">
+            <div class="logo"><img src="data:image/png;base64,{b64_image}" alt="Logo"></div>
+            <div class="company-details">
+                <strong>Aureus Infotech Inc.</strong><br>
+                7250 Keele St. #381<br>
+                Vaughan, ON, L4K 1Z8<br>
+                <a href="mailto:info@aureusinfotech.com">info@aureusinfotech.com</a><br>
+                www.aureusinfotech.com<br>
+                Tel: +1-416-890-8380
+            </div>
+        </div>
+
+        <div class="paystub-title">PAYSTUB</div>
+        <div><strong>{full_name.upper()}</strong><br>{address}</div>
+
+        <table>
+            <tr class="red">
+                <th>EMPLOYEE ID</th><th>PERIOD ENDING</th><th>PAY DATE</th><th>CHEQUE NUMBER</th>
+            </tr>
+            <tr>
+                <td>{emp_code}</td><td>{pay_date.strftime("%d-%m-%y")}</td><td>{pay_date.strftime("%d-%m-%y")}</td><td>Direct Deposit</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th>INCOME</th><th>RATE</th><th>HOURS</th><th>CURRENT TOTAL</th>
+                <th>DEDUCTIONS</th><th>CURRENT TOTAL</th><th>YTD</th>
+            </tr>
+            <tr>
+                <td class="text-left">REGULAR</td><td></td><td></td><td>{reg:.2f}</td>
+                <td class="text-left">CPP</td><td>{cpp:.2f}</td><td>{ytd_cpp:.2f}</td>
+            </tr>
+            <tr>
+                <td class="text-left">PROJECT BONUS</td><td></td><td></td><td>{proj:.2f}</td>
+                <td class="text-left">EI</td><td>{ei:.2f}</td><td>{ytd_ei:.2f}</td>
+            </tr>
+            <tr>
+                <td class="text-left">LEADERSHIP BONUS</td><td></td><td></td><td>{lead:.2f}</td>
+                <td class="text-left">INCOME TAX</td><td>{it:.2f}</td><td>{ytd_it:.2f}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th>YTD GROSS</th><th>YTD DEDUCTIONS</th><th>YTD NET PAY</th>
+                <th>CURRENT TOTAL</th><th>DEDUCTIONS</th><th>NET PAY</th>
+            </tr>
+            <tr>
+                <td>{ytd_gross:.2f}</td><td>{ytd_deductions:.2f}</td><td>{ytd_net:.2f}</td>
+                <td>{reg + proj + lead:.2f}</td><td>{cpp + ei + it:.2f}</td><td>{net:.2f}</td>
+            </tr>
+        </table>
+        <div style="page-break-before: always;"></div>
+        <h2 style="text-align: center;">Salary History - {current_year}</h2>
+        <table border="1" cellspacing="0" cellpadding="6" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead style="background-color: #ADD8E6;">
+                <tr>
+                    <th>MONTH</th><th>GROSS</th><th>IT</th><th>CPP</th><th>EI</th><th>TOT DED</th><th>NET</th>
+                </tr>
+            </thead>
+            <tbody>
+                {page2_rows}
+            </tbody>
+        </table>
+
+        </body></html>
+        """
+
+        # PDF Generation using pdfkit
+        path_to_wkhtmltopdf = r"D:\WKHTMLTOX\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+        pdf_data = pdfkit.from_string(html_string, False, configuration=config)
+
+        response = HttpResponse(pdf_data, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Payslip.pdf"'
+        return response
+
+   
 class LogoutView(RedirectView):
     """Logs out the user and clears session data"""
     url = "/login/"  # Redirects to login after logout

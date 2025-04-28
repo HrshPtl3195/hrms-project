@@ -11,7 +11,7 @@ from django.views.generic import TemplateView, RedirectView
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.conf import settings
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.utils.cache import add_never_cache_headers
 from django.http import JsonResponse
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak
@@ -100,11 +100,7 @@ class HybridDashboardView(HybridRequiredMixin, View):
             # Total upcoming payroll (Sum of salaries)
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips")
             total_upcoming_payroll = cursor.fetchone()[0]
-
-            # Number of unique designations (departments)
-            cursor.execute("SELECT COUNT(DISTINCT designation) FROM employees WHERE is_deleted = 0")
-            total_departments = cursor.fetchone()[0]
-
+            
             # Get Profile Image (First Available)
             cursor.execute(f"""
                 SELECT profile_image 
@@ -262,46 +258,13 @@ class HybridDashboardView(HybridRequiredMixin, View):
                     "message": f"{row[0]} {row[1]}'s leave pending for over 3 days."
                 })
 
-            # ✅ Get leave requests of Office Admins & Hybrid employees only (PENDING only)
-            cursor.execute("""
-                SELECT 
-                    l.leave_id,
-                    e.first_name,
-                    e.last_name,
-                    l.leave_type,
-                    l.L_start_date,
-                    l.L_end_date,
-                    l.leave_reason,
-                    od.profile_image
-                FROM leaves l
-                JOIN employees e ON l.employee_id = e.employee_id
-                JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE l.L_status = 'PENDING' AND u.u_role IN ('OFFICE_ADMIN', 'EMPLOYEE')
-                ORDER BY l.L_start_date DESC
-            """)
-
-            leave_status_list = []
-            for row in cursor.fetchall():
-                leave_status_list.append({
-                    "leave_id": row[0],
-                    "emp_name": f"{row[1]} {row[2]}",
-                    "leave_type": row[3],
-                    "start_date": row[4].strftime("%b %d, %Y"),
-                    "end_date": row[5].strftime("%b %d, %Y"),
-                    "reason": row[6],
-                    "profile_image": row[7] or "default.png"
-                })
-
         return {
             "user_name": user_name,
             "total_employees": total_employees,
             "total_pending_leaves": total_pending_leaves,
             "total_upcoming_payroll": total_upcoming_payroll,
-            "total_departments": total_departments,
             "profile_image": profile_image,
             "notifications":list(reversed(notifications)),
-            "leave_status_list": leave_status_list
         }
 
 
@@ -902,13 +865,12 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
 
             # Get filters
             search_query = request.GET.get("q", "")
-            department_id = request.GET.get("department_id")
             page_number = int(request.GET.get("page", 1))
             page_size = 5
 
             # Fetch data
             employee_list, total_count, start, end = self.get_all_employees(
-                request.user.user_id, search_query, department_id, page_number, page_size
+                request.user.user_id, search_query, page_number, page_size
             )
 
             paginator = Paginator(range(total_count), page_size)
@@ -951,21 +913,12 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
             profile_image = cursor.fetchone()
             profile_image = profile_image[0] if profile_image else None
 
-            cursor.execute("""
-                SELECT department_id, name 
-                FROM departments 
-                WHERE is_active = 1 AND LOWER(name) != 'hr'
-                ORDER BY name
-            """)
-            departments = cursor.fetchall()
-
         return {
             "user_name": user_name,
             "profile_image": profile_image,
-            "department_list": [{"id": d[0], "name": d[1]} for d in departments]
         }
 
-    def get_all_employees(self, user_id, search_query="", department_id=None, page=1, page_size=5):
+    def get_all_employees(self, user_id, search_query="", page=1, page_size=5):
         with connection.cursor() as cursor:
             sql = """
                 SELECT 
@@ -975,7 +928,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining,
                     od.profile_image,
 
@@ -989,7 +941,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN employee_contact_details cd ON e.employee_id = cd.employee_id
                 WHERE 
                     e.is_deleted = 0
@@ -998,10 +949,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                     AND u.user_id != %s
             """
             params = [user_id]
-
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             if search_query:
                 sql += """ AND (
@@ -1033,16 +980,15 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                 "name": full_name,
                 "email": row[4],
                 "designation": row[5],
-                "department": row[6],
-                "joining_date": row[7].strftime("%b %d, %Y") if row[7] else "N/A",
-                "profile_image": row[8] or "default.png",
+                "joining_date": row[6].strftime("%b %d, %Y") if row[6] else "N/A",
+                "profile_image": row[7] or "default.png",
                 "contact": {
-                    "current_email": row[9] or "",
-                    "current_phone": row[10] or "",
-                    "permanent_email": row[11] or "",
-                    "permanent_phone": row[12] or "",
-                    "current_address": row[13] or "",
-                    "permanent_address": row[14] or "",
+                    "current_email": row[8] or "",
+                    "current_phone": row[9] or "",
+                    "permanent_email": row[10] or "",
+                    "permanent_phone": row[11] or "",
+                    "current_address": row[12] or "",
+                    "permanent_address": row[13] or "",
                 }
             })
 
@@ -1079,7 +1025,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                         request.POST.get("current_address"),
                         request.POST.get("permanent_address"),
                         None,  # designation
-                        None,  # department_id
                         None   # joining_date
                     ])
                 elif section == "job":
@@ -1088,7 +1033,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
                         section,
                         None, None, None, None, None, None,
                         request.POST.get("new_designation"),
-                        request.POST.get("department"),
                         request.POST.get("new_joining_date")
                     ])
                 else:
@@ -1104,7 +1048,6 @@ class EmployeeManagementView(HybridRequiredMixin, TemplateView):
 class EmployeeSearchView(HybridRequiredMixin, View):
     def get(self, request):
         search_query = request.GET.get("q", "").strip().lower()
-        department_id = request.GET.get("department_id")
         page_number = int(request.GET.get("page", 1))
         page_size = 5
 
@@ -1117,7 +1060,6 @@ class EmployeeSearchView(HybridRequiredMixin, View):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining,
                     od.profile_image,
 
@@ -1131,16 +1073,10 @@ class EmployeeSearchView(HybridRequiredMixin, View):
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
                 LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 LEFT JOIN employee_contact_details cd ON e.employee_id = cd.employee_id
                 WHERE e.is_deleted = 0 AND u.u_role != 'HYBRID' AND u.u_role != 'HR_ADMIN' AND u.user_id != %s
             """
             params = [request.user.user_id]
-
-            # Department filter
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             # Enhanced Search Logic
             if search_query:
@@ -1201,16 +1137,15 @@ class EmployeeSearchView(HybridRequiredMixin, View):
                 "name": full_name,
                 "email": row[4],
                 "designation": row[5],
-                "department": row[6],
-                "joining_date": row[7].strftime("%b %d, %Y") if row[7] else "N/A",
-                "profile_image": row[8] or "default.png",
+                "joining_date": row[6].strftime("%b %d, %Y") if row[6] else "N/A",
+                "profile_image": row[7] or "default.png",
                 "contact": {
-                    "current_email": row[9] or "",
-                    "current_phone": row[10] or "",
-                    "permanent_email": row[11] or "",
-                    "permanent_phone": row[12] or "",
-                    "current_address": row[13] or "",
-                    "permanent_address": row[14] or "",
+                    "current_email": row[8] or "",
+                    "current_phone": row[9] or "",
+                    "permanent_email": row[10] or "",
+                    "permanent_phone": row[11] or "",
+                    "current_address": row[12] or "",
+                    "permanent_address": row[13] or "",
                 }
             })
 
@@ -1227,7 +1162,6 @@ class EmployeeSearchView(HybridRequiredMixin, View):
 class EmployeeExportView(HybridRequiredMixin, View):
     def get(self, request):
         search_query = request.GET.get("q", "")
-        department_id = request.GET.get("department_id")
         export_format = request.GET.get("format", "excel")
 
         with connection.cursor() as cursor:
@@ -1238,18 +1172,12 @@ class EmployeeExportView(HybridRequiredMixin, View):
                     e.last_name,
                     u.email,
                     e.designation,
-                    d.name AS department_name,
                     e.date_of_joining
                 FROM employees e
                 JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN departments d ON e.department = d.department_id
                 WHERE e.is_deleted = 0 AND u.u_role != 'HYBRID' AND u.u_role != 'HR_ADMIN' AND u.user_id != %s
             """
             params = [request.user.user_id]
-
-            if department_id:
-                sql += " AND e.department = %s"
-                params.append(department_id)
 
             if search_query:
                 sql += " AND (LOWER(e.first_name) LIKE LOWER(%s) OR LOWER(e.last_name) LIKE LOWER(%s) OR LOWER(u.email) LIKE LOWER(%s))"
@@ -1267,7 +1195,7 @@ class EmployeeExportView(HybridRequiredMixin, View):
             ws = wb.active
             ws.title = "Employees"
 
-            headers = ["Full Name", "Email", "Designation", "Department", "Joining Date"]
+            headers = ["Full Name", "Email", "Designation", "Joining Date"]
             ws.append(headers)
 
             for row in rows:
@@ -1276,8 +1204,7 @@ class EmployeeExportView(HybridRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5],  # department
-                    row[6].strftime("%b %d, %Y") if row[6] else ""
+                    row[5].strftime("%b %d, %Y") if row[6] else ""
                 ])
 
             response = HttpResponse(
@@ -1305,7 +1232,7 @@ class EmployeeExportView(HybridRequiredMixin, View):
             elements.append(Spacer(1, 12))
 
             # Table Data
-            table_data = [["Full Name", "Email", "Designation", "Department", "Joining Date"]]
+            table_data = [["Full Name", "Email", "Designation", "Joining Date"]]
 
             for row in rows:
                 full_name = f"{row[0]} {row[1]} {row[2]}".strip()
@@ -1314,7 +1241,6 @@ class EmployeeExportView(HybridRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5],  # department
                     joining_date
                 ])
 
@@ -1409,15 +1335,9 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             profile_image = cursor.fetchone()
             profile_image = profile_image[0] if profile_image else None
             
-            cursor.execute("SELECT department_id, name FROM departments WHERE is_active = 1 ORDER BY name")
-            departments = cursor.fetchall()
-
-            department_list = [{"department_id": row[0], "name": row[1]} for row in departments]
-
         return {
             "user_name": user_name,
             "profile_image": profile_image,
-            "department_list": department_list
         }
     
     def post(self, request):
@@ -1520,14 +1440,7 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
         
         criminalRecord = "YES" if request.POST.get("criminalRecord", "no").strip().lower() == "yes" else "NO"
         
-        userRole = request.POST.get("userRole", "").strip().upper()
-        if userRole == "OA":
-            userRole = "OFFICE_ADMIN"
-        elif userRole == "EM":
-            userRole = "EMPLOYEE"
-        elif userRole == "HY":
-            userRole = "HYBRID"
-        # print(userRole)
+        userRole = "EMPLOYEE"
 
         currentPhone = request.POST.get("currentPhone")
         permanentPhone = request.POST.get("permanentPhone")
@@ -1549,7 +1462,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
         # Current Job Details
         dateOfJoining = request.POST.get("dateOfJoining")
         designation = request.POST.get("designation")
-        department = request.POST.get("department")
         
         date_fields = ["passportIssueDate", "passportExpiryDate", "prInforceFrom", 
                "prExpiryDate", "sinIssueDate", "sinExpiryDate", 
@@ -1728,7 +1640,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
                 ,criminalRecord
                 ,dateOfJoining
                 ,designation
-                ,department
                 
                 ,currentAddress
                 ,permanentAddress
@@ -1928,81 +1839,6 @@ class LeaveManagementView(HybridRequiredMixin, TemplateView):
         }
 
 
-class LeaveActionView(HybridRequiredMixin, View):
-    def post(self, request):
-        leave_id = request.POST.get("leave_id")
-        action = request.POST.get("action")  # APPROVED or REJECTED
-        hr_user_id = request.user.user_id
-
-        try:
-            with connection.cursor() as cursor:
-                # Update leave
-                cursor.execute("""
-                    UPDATE leaves
-                    SET L_status = %s, approved_by = %s
-                    WHERE leave_id = %s
-                """, [action, hr_user_id, leave_id])
-
-                # Get employee details and leave info
-                cursor.execute("""
-                    SELECT u.email, e.first_name, e.last_name, l.leave_type, 
-                           l.L_start_date, l.L_end_date, l.leave_reason
-                    FROM users u
-                    JOIN employees e ON e.user_id = u.user_id
-                    JOIN leaves l ON l.employee_id = e.employee_id
-                    WHERE l.leave_id = %s
-                """, [leave_id])
-                row = cursor.fetchone()
-
-                if row:
-                    email, first_name, last_name, leave_type, start_date, end_date, reason = row
-                    full_name = f"{first_name} {last_name}"
-                    total_days = (end_date - start_date).days + 1
-
-                    subject = f"Leave Request {action.title()} – HR Management System"
-
-                    message = f"""
-                    <html>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-                            <h2 style="color: #1B9AF5;">Leave Request {action.title()}</h2>
-
-                            <p>Dear {full_name},</p>
-
-                            <p>Your <strong>{leave_type}</strong> leave request with ID <strong>{leave_id}</strong> has been 
-                            <strong style="color: {'green' if action == 'APPROVED' else 'red'};">{action.title()}</strong> by the HR department.</p>
-
-                            <p><strong>Leave Duration:</strong> {start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')} ({total_days} day{'s' if total_days > 1 else ''})</p>
-                            <p><strong>Reason:</strong> {reason}</p>
-
-                            <p>If you have any questions regarding this decision, please contact your HR manager.</p>
-
-                            <p>Thank you,<br>
-                            <strong>HR Management System</strong></p>
-
-                            <hr style="margin-top: 30px;"/>
-                            <p style="font-size: 12px; color: #777;">
-                                This is an automated message. Please do not reply to this email.
-                            </p>
-                        </div>
-                    </body>
-                    </html>
-                    """
-
-                    send_mail(
-                        subject=subject,
-                        message="",
-                        html_message=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[email]
-                    )
-
-            return JsonResponse({"success": True})
-        except Exception as e:
-            logger.error("❌ Leave approval failed", exc_info=True)
-            return JsonResponse({"success": False, "error": str(e)})
-
-
 class LeaveApprovalView(HybridRequiredMixin, TemplateView):
     def get(self, request):
         if not hasattr(request.user, "user_id"):
@@ -2097,7 +1933,7 @@ class LeaveApprovalView(HybridRequiredMixin, TemplateView):
                         (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HYBRID'
                         AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'OFFICE_ADMIN')
                     )
-                ) AND approved_by = {user_id};""")
+                );""")
             total_approved_leaves = cursor.fetchone()[0]
 
             # Total number of rejected leaves
@@ -2124,7 +1960,7 @@ class LeaveApprovalView(HybridRequiredMixin, TemplateView):
                         (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HYBRID'
                         AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'OFFICE_ADMIN')
                     )
-                ) AND approved_by = {user_id};""")
+                );""")
             total_rejected_leaves = cursor.fetchone()[0]
 
         return {
@@ -2171,9 +2007,9 @@ class LeaveApprovalView(HybridRequiredMixin, TemplateView):
                     AND (
                         (l.L_status = 'PENDING')
                         OR
-                        (l.L_status = 'APPROVED' AND l.approved_by = {user_id})
+                        (l.L_status = 'APPROVED')
                         OR
-                        (l.L_status = 'REJECTED' AND l.approved_by = {user_id})
+                        (l.L_status = 'REJECTED')
                     )
             """
             params = []
@@ -2316,13 +2152,12 @@ class DownloadLeavePDFView(HybridRequiredMixin, View):
             with connection.cursor() as cursor:
                 cursor.execute("""
                 SELECT 
-                    e.first_name, e.last_name, e.designation, d.name,
+                    e.first_name, e.last_name, e.designation,
                     l.leave_type, l.L_start_date, l.L_end_date, l.L_status,
                     l.L_apply_date, l.leave_reason, e.employee_id
                 FROM leaves l
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON u.user_id = e.user_id
-                JOIN departments d ON e.department = d.department_id
                 WHERE l.leave_id = %s AND e.user_id = %s
                 """, [leave_id, user_id])
                 row = cursor.fetchone()
@@ -2333,15 +2168,14 @@ class DownloadLeavePDFView(HybridRequiredMixin, View):
                 # Unpack details
                 full_name = f"{row[0]} {row[1]}"
                 designation = row[2]
-                department = row[3]
-                leave_type = row[4]
-                start_date = row[5].strftime("%B %d, %Y")
-                end_date = row[6].strftime("%B %d, %Y")
-                total_days = (row[6] - row[5]).days + 1
-                status = row[7].capitalize()
-                apply_date = row[8].strftime("%B %d, %Y")
-                reason = row[9]
-                employee_id = row[10]
+                leave_type = row[3]
+                start_date = row[4].strftime("%B %d, %Y")
+                end_date = row[5].strftime("%B %d, %Y")
+                total_days = (row[5] - row[4]).days + 1
+                status = row[6].capitalize()
+                apply_date = row[7].strftime("%B %d, %Y")
+                reason = row[8]
+                employee_id = row[9]
 
             # Create PDF
             buffer = io.BytesIO()
@@ -2364,8 +2198,7 @@ class DownloadLeavePDFView(HybridRequiredMixin, View):
                 "To,",
                 f"Name: <b>{full_name}</b>",
                 f"ID: <b>{employee_id}</b>",
-                f"Dsgn.: <b>{designation}</b>",
-                f"Dept.: <b>{department}</b>"
+                f"Dsgn.: <b>{designation}</b>"
             ]
 
             for line in recipient:
@@ -2589,335 +2422,6 @@ class RequestLeaveView(HybridRequiredMixin, TemplateView):
         except Exception as e:
             logger.error("❌ Error submitting leave request", exc_info=True)
             return JsonResponse({"success": False, "error": "Something went wrong."})
-
-
-class PayrollView(HybridRequiredMixin, TemplateView):
-    template_name = "hybrid/office_admin/payroll.html"
-
-    def get(self, request):
-        if not hasattr(request.user, "user_id"):
-            return redirect("login")
-
-        try:
-            data = self.get_payroll_data(request.user.user_id)
-            data["employee_list"] = self.get_employee_list_for_dropdown(request.user.user_id)
-
-            # Filters
-            page_number = int(request.GET.get("page", 1))
-            page_size = 5
-
-            # Get payroll list
-            payslip_list, total_count, start, end = self.get_all_payslips(page_number, page_size, request.user.user_id)
-            paginator = Paginator(range(total_count), page_size)
-            page_obj = paginator.get_page(page_number)
-
-            data.update({
-                "payslip_list": payslip_list,
-                "page_obj": page_obj,
-                "total_count": total_count,
-                "start": start,
-                "end": end,
-            })
-
-            if data.get("profile_image"):
-                data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-        except Exception as e:
-            logger.error("❌ Error fetching payroll data:", exc_info=True)
-            data = {}
-
-        return render(request, self.template_name, data)
-
-    def get_payroll_data(self, user_id):
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT e.first_name, e.middle_name, e.last_name
-                FROM employees e
-                JOIN users u ON e.user_id = u.user_id
-                WHERE u.user_id = %s
-            """, [user_id])
-            user = cursor.fetchone()
-            user_name = user[0] + " " + user[2]
-
-            cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips WHERE generated_by = %s", [user_id])
-            total_payroll = cursor.fetchone()[0]
-
-            cursor.execute("SELECT COUNT(*) FROM employees WHERE is_deleted = 0")
-            total_employees = cursor.fetchone()[0]
-            
-            cursor.execute("""
-                SELECT COUNT(*)
-                FROM payslips
-                WHERE MONTH(period_ending) = 4
-                AND YEAR(period_ending) = 2025
-                AND generated_by = %s
-            """, [user_id])
-            payslips_this_month = cursor.fetchone()[0]
-
-            cursor.execute("""
-                SELECT ISNULL(SUM(project_bonus + leadership_bonus), 0)
-                FROM payslips
-                WHERE MONTH(period_ending) = 4
-                AND YEAR(period_ending) = 2025
-                AND generated_by = %s
-            """, [user_id])
-            total_bonuses_this_month = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT profile_image FROM other_documents WHERE employee_id = (SELECT employee_id FROM employees WHERE user_id = %s)", [user_id])
-            profile_image = cursor.fetchone()
-            profile_image = profile_image[0] if profile_image else None
-
-        return {
-            "user_name": user_name,
-            "profile_image": profile_image,
-            "total_upcoming_payroll": total_payroll,
-            "total_employees": total_employees,
-            "total_bonuses_this_month": total_bonuses_this_month,
-            "payslips_this_month": payslips_this_month
-        }
-        
-    def get_employee_list_for_dropdown(self, user_id):
-        with connection.cursor() as cursor:
-            query="""
-                SELECT 
-                    e.employee_id,
-                    CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
-                    od.profile_image
-                FROM employees e
-                JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN departments d ON e.department = d.department_id
-                LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE 
-                    e.is_deleted = 0
-                    AND u.u_role != 'HR_ADMIN'
-                    AND u.u_role != 'OFFICE_ADMIN'
-                    AND u.u_role != 'HYBRID'
-                    AND u.user_id != %s
-                ORDER BY full_name
-                """
-            cursor.execute(query, [user_id])
-            rows = cursor.fetchall()
-
-        return [{
-            "employee_id": row[0],
-            "full_name": row[1],
-            "department": row[2] or "N/A",
-            "profile_image": row[3] or "default.png"
-        } for row in rows]
-
-    def get_all_payslips(self, page, page_size, user_id):
-        with connection.cursor() as cursor:
-            base_sql = f"""
-                SELECT 
-                    p.payslip_id,
-                    p.employee_id,
-                    CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
-                    e.designation,
-                    p.salary,
-                    (p.project_bonus + p.leadership_bonus) AS bonuses,
-                    p.net_pay,
-                    p.period_ending,
-                    p.pay_date,
-                    ISNULL(od.profile_image, 'default.png') AS profile_image
-                FROM payslips p
-                JOIN employees e ON p.employee_id = e.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
-                LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE p.generated_by = {user_id}
-            """
-
-            # ✅ Fix: Wrap with column names for subquery
-            count_sql = f"""
-                SELECT COUNT(*) FROM (
-                    {base_sql}
-                ) AS total
-            """
-            cursor.execute(count_sql)
-            total_count = cursor.fetchone()[0]
-
-            # ✅ Main paginated query with ORDER BY + OFFSET
-            paginated_sql = base_sql + """
-                ORDER BY p.date_generated DESC
-                OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
-            """
-            offset = (page - 1) * page_size
-            cursor.execute(paginated_sql, [offset, page_size])
-            rows = cursor.fetchall()
-
-        payslip_list = []
-        for row in rows:
-            payslip_list.append({
-                "payslip_id": row[0],
-                "employee_id": row[1],
-                "name": row[2].strip(),
-                "department": row[3],
-                "designation": row[4],
-                "base_salary": float(row[5]),
-                "bonuses": float(row[6]),
-                "total": float(row[7]),
-                "period": row[8].strftime("%b %Y"),
-                "pay_date": row[9].strftime("%d %b %Y"),
-                "profile_image": row[10],
-            })
-
-        start = (page - 1) * page_size + 1
-        end = min(start + len(payslip_list) - 1, total_count)
-        return payslip_list, total_count, start, end
-
-
-class GeneratePayslipsView(HybridRequiredMixin, View):
-    def post(self, request):
-        try:
-            data = json.loads(request.body)
-            payslips = data.get("payslips", [])
-            today = date.today()
-            period_end = today.replace(day=28)
-            month = today.strftime("%b").upper()
-            year = today.year
-
-            with connection.cursor() as cursor:
-                for slip in payslips:
-                    employee_id = slip["employee_id"]
-                    regular = float(slip["regular_income"])
-                    project = float(slip.get("project_bonus", 0))
-                    leadership = float(slip.get("leadership_bonus", 0))
-                    cpp = float(slip["cpp"])
-                    ei = float(slip["ei"])
-                    it = float(slip["income_tax"])
-                    
-                    gross = regular + project + leadership
-                    total_deductions = cpp + ei + it
-                    net = gross - total_deductions
-                    
-                    
-                   # 1️⃣ Insert into payslips table (skip computed fields like salary/deductions/net_pay)
-                    cursor.execute("""
-                        INSERT INTO payslips (
-                            employee_id, regular_income, project_bonus, leadership_bonus,
-                            cpp, ei, income_tax,
-                            period_ending, pay_date, generated_by, emailed
-                        )
-                        OUTPUT INSERTED.payslip_id
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
-                    """, [
-                        employee_id, regular, project, leadership,
-                        cpp, ei, it,
-                        period_end, today, request.user.user_id
-                    ])
-                    payslip_id = cursor.fetchone()[0]
-
-                    # 2️⃣ Insert into payroll_summary (manual computation needed for gross, net)
-                    cursor.execute("""
-                        INSERT INTO payroll_summary (
-                            employee_id, month_name, year,
-                            gross, cpp, ei, income_tax, net, payslip_id
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, [
-                        employee_id, month, year,
-                        gross, cpp, ei, it, net, payslip_id
-                    ])
-
-            return JsonResponse({"success": True})
-        
-        except Exception as e:
-            print("❌ Error in generate_payslips:", e)
-            return JsonResponse({"success": False, "error": str(e)})
-
-
-class ExportPayslipsView(HybridRequiredMixin, View):
-    def get(self, request):
-        export_format = request.GET.get("format", "excel")
-
-        with connection.cursor() as cursor:
-            cursor.execute(f"""
-                SELECT 
-                    CONCAT(e.first_name, ' ', COALESCE(e.middle_name, ''), ' ', e.last_name) AS full_name,
-                    d.name AS department,
-                    e.designation,
-                    p.salary,
-                    (p.project_bonus + p.leadership_bonus) AS bonuses,
-                    p.net_pay,
-                    p.period_ending,
-                    p.pay_date
-                FROM payslips p
-                JOIN employees e ON p.employee_id = e.employee_id
-                LEFT JOIN departments d ON e.department = d.department_id
-                WHERE p.generated_by = {request.user.user_id}
-                ORDER BY p.date_generated DESC
-            """)
-            rows = cursor.fetchall()
-
-        # 📄 Excel Export
-        if export_format == "excel":
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "Payslips"
-
-            headers = ["Employee", "Department", "Designation", "Gross Salary", "Bonuses", "Net Pay", "Period", "Pay Date"]
-            ws.append(headers)
-
-            for row in rows:
-                ws.append([
-                    row[0],  # full name
-                    row[1] or "N/A",  # department
-                    row[2] or "N/A",  # designation
-                    float(row[3]),   # salary
-                    float(row[4]),   # bonuses
-                    float(row[5]),   # net pay
-                    row[6].strftime("%b %Y") if row[6] else "",
-                    row[7].strftime("%d %b %Y") if row[7] else ""
-                ])
-
-            response = HttpResponse(
-                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            response["Content-Disposition"] = 'attachment; filename=PayrollList.xlsx'
-            wb.save(response)
-            return response
-
-        # 🧾 PDF Export
-        elif export_format == "pdf":
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="PayrollList.pdf"'
-
-            doc = SimpleDocTemplate(response, pagesize=A4)
-            styles = getSampleStyleSheet()
-            elements = []
-
-            elements.append(Paragraph("Payroll Summary", styles["Title"]))
-            elements.append(Spacer(1, 12))
-
-            table_data = [["Employee", "Department", "Designation", "Gross", "Bonus", "Net", "Period", "Pay Date"]]
-
-            for row in rows:
-                table_data.append([
-                    row[0],
-                    row[1] or "N/A",
-                    row[2] or "N/A",
-                    f"${float(row[3]):,.2f}",
-                    f"${float(row[4]):,.2f}",
-                    f"${float(row[5]):,.2f}",
-                    row[6].strftime("%b %Y") if row[6] else "",
-                    row[7].strftime("%d %b %Y") if row[7] else ""
-                ])
-
-            table = Table(table_data, repeatRows=1)
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ]))
-
-            elements.append(table)
-            doc.build(elements)
-            return response
 
 
 class MyPayrollView(HybridRequiredMixin, TemplateView):

@@ -401,17 +401,19 @@ class OfficeAdminDashboardView(LoginRequiredMixin, TemplateView):
                         (SELECT u_role FROM users WHERE user_id = {user_id}) = 'OFFICE_ADMIN'
                         AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'HYBRID')
                     )
+                    OR 
+                    -- Case when the logged-in user is an Hybrid
+                    (
+                        (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HYBRID'
+                        AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'OFFICE_ADMIN')
+                    )
                 );""")
             total_pending_leaves = cursor.fetchone()[0]
 
             # Total upcoming payroll (Sum of salaries)
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips")
             total_upcoming_payroll = cursor.fetchone()[0]
-
-            # Number of unique designations (departments)
-            cursor.execute("SELECT COUNT(DISTINCT designation) FROM employees WHERE is_deleted = 0")
-            total_departments = cursor.fetchone()[0]
-
+            
             # Get Profile Image (First Available)
             cursor.execute(f"""
                 SELECT profile_image 
@@ -569,46 +571,13 @@ class OfficeAdminDashboardView(LoginRequiredMixin, TemplateView):
                     "message": f"{row[0]} {row[1]}'s leave pending for over 3 days."
                 })
 
-            # ✅ Get leave requests of Office Admins & Hybrid employees only (PENDING only)
-            cursor.execute("""
-                SELECT 
-                    l.leave_id,
-                    e.first_name,
-                    e.last_name,
-                    l.leave_type,
-                    l.L_start_date,
-                    l.L_end_date,
-                    l.leave_reason,
-                    od.profile_image
-                FROM leaves l
-                JOIN employees e ON l.employee_id = e.employee_id
-                JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE l.L_status = 'PENDING' AND u.u_role IN ('HYBRID', 'EMPLOYEE')
-                ORDER BY l.L_start_date DESC
-            """)
-
-            leave_status_list = []
-            for row in cursor.fetchall():
-                leave_status_list.append({
-                    "leave_id": row[0],
-                    "emp_name": f"{row[1]} {row[2]}",
-                    "leave_type": row[3],
-                    "start_date": row[4].strftime("%b %d, %Y"),
-                    "end_date": row[5].strftime("%b %d, %Y"),
-                    "reason": row[6],
-                    "profile_image": row[7] or "default.png"
-                })
-
         return {
             "user_name": user_name,
             "total_employees": total_employees,
             "total_pending_leaves": total_pending_leaves,
             "total_upcoming_payroll": total_upcoming_payroll,
-            "total_departments": total_departments,
             "profile_image": profile_image,
             "notifications":list(reversed(notifications)),
-            "leave_status_list": leave_status_list
         }
 
 
@@ -861,11 +830,12 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
                     (
                         (SELECT u_role FROM users WHERE user_id = {user_id}) = 'OFFICE_ADMIN'
                         AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'HYBRID')
-                    )OR 
+                    )
+                    OR 
                     -- Case when the logged-in user is an Hybrid
                     (
                         (SELECT u_role FROM users WHERE user_id = {user_id}) = 'HYBRID'
-                        AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'HYBRID')
+                        AND (u.u_role = 'EMPLOYEE' OR u.u_role = 'OFFICE_ADMIN')
                     )
                 );""")
             total_pending_leaves = cursor.fetchone()[0]
@@ -873,11 +843,7 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
             # Total upcoming payroll (Sum of salaries)
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips")
             total_upcoming_payroll = cursor.fetchone()[0]
-
-            # Number of unique designations (departments)
-            cursor.execute("SELECT COUNT(DISTINCT designation) FROM employees WHERE is_deleted = 0")
-            total_departments = cursor.fetchone()[0]
-
+            
             # Get Profile Image (First Available)
             cursor.execute(f"""
                 SELECT profile_image 
@@ -1035,46 +1001,13 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
                     "message": f"{row[0]} {row[1]}'s leave pending for over 3 days."
                 })
 
-            # ✅ Get leave requests of Office Admins & Hybrid employees only (PENDING only)
-            cursor.execute("""
-                SELECT 
-                    l.leave_id,
-                    e.first_name,
-                    e.last_name,
-                    l.leave_type,
-                    l.L_start_date,
-                    l.L_end_date,
-                    l.leave_reason,
-                    od.profile_image
-                FROM leaves l
-                JOIN employees e ON l.employee_id = e.employee_id
-                JOIN users u ON e.user_id = u.user_id
-                LEFT JOIN other_documents od ON e.employee_id = od.employee_id
-                WHERE l.L_status = 'PENDING' AND u.u_role IN ('OFFICE_ADMIN', 'EMPLOYEE')
-                ORDER BY l.L_start_date DESC
-            """)
-
-            leave_status_list = []
-            for row in cursor.fetchall():
-                leave_status_list.append({
-                    "leave_id": row[0],
-                    "emp_name": f"{row[1]} {row[2]}",
-                    "leave_type": row[3],
-                    "start_date": row[4].strftime("%b %d, %Y"),
-                    "end_date": row[5].strftime("%b %d, %Y"),
-                    "reason": row[6],
-                    "profile_image": row[7] or "default.png"
-                })
-
         return {
             "user_name": user_name,
             "total_employees": total_employees,
             "total_pending_leaves": total_pending_leaves,
             "total_upcoming_payroll": total_upcoming_payroll,
-            "total_departments": total_departments,
             "profile_image": profile_image,
             "notifications":list(reversed(notifications)),
-            "leave_status_list": leave_status_list
         }
 
 

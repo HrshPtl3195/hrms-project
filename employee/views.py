@@ -736,13 +736,12 @@ class DownloadLeavePDFView(EmployeeRequiredMixin, View):
             with connection.cursor() as cursor:
                 cursor.execute("""
                 SELECT 
-                    e.first_name, e.last_name, e.designation, d.name,
+                    e.first_name, e.last_name, e.designation,
                     l.leave_type, l.L_start_date, l.L_end_date, l.L_status,
                     l.L_apply_date, l.leave_reason, e.employee_id
                 FROM leaves l
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON u.user_id = e.user_id
-                JOIN departments d ON e.department = d.department_id
                 WHERE l.leave_id = %s AND e.user_id = %s
                 """, [leave_id, user_id])
                 row = cursor.fetchone()
@@ -753,15 +752,14 @@ class DownloadLeavePDFView(EmployeeRequiredMixin, View):
                 # Unpack details
                 full_name = f"{row[0]} {row[1]}"
                 designation = row[2]
-                department = row[3]
-                leave_type = row[4]
-                start_date = row[5].strftime("%B %d, %Y")
-                end_date = row[6].strftime("%B %d, %Y")
-                total_days = (row[6] - row[5]).days + 1
-                status = row[7].capitalize()
-                apply_date = row[8].strftime("%B %d, %Y")
-                reason = row[9]
-                employee_id = row[10]
+                leave_type = row[3]
+                start_date = row[4].strftime("%B %d, %Y")
+                end_date = row[5].strftime("%B %d, %Y")
+                total_days = (row[5] - row[4]).days + 1
+                status = row[6].capitalize()
+                apply_date = row[7].strftime("%B %d, %Y")
+                reason = row[8]
+                employee_id = row[9]
 
             # Create PDF
             buffer = io.BytesIO()
@@ -784,8 +782,7 @@ class DownloadLeavePDFView(EmployeeRequiredMixin, View):
                 "To,",
                 f"Name: <b>{full_name}</b>",
                 f"ID: <b>{employee_id}</b>",
-                f"Dsgn.: <b>{designation}</b>",
-                f"Dept.: <b>{department}</b>"
+                f"Dsgn.: <b>{designation}</b>"
             ]
 
             for line in recipient:

@@ -3,11 +3,10 @@ from django.conf.urls.static import static
 from django.urls import path
 from .views import (
     OfficeAdminDashboardView, OfficeAdminProfileView, EmployeeManagementView,
-    LeaveApprovalView, PayrollView, MyPayrollView, AddEmployeeView,
-    LeaveManagementView, RequestLeaveView, LogoutView, LeaveActionView,
+    LeaveApprovalView, MyPayrollView, AddEmployeeView,LeaveManagementView,
+    RequestLeaveView, LogoutView, LeaveActionView, DownloadPayslipPDFView,
     AccessDeniedView, EmployeeSearchView, EmployeeExportView, EmployeeDeleteView,
-    LeaveExportView, CancelLeaveRequestView, DownloadLeavePDFView,
-    GeneratePayslipsView, ExportPayslipsView, DownloadPayslipPDFView
+    LeaveExportView, CancelLeaveRequestView, DownloadLeavePDFView
 )
 
 urlpatterns = [
@@ -15,10 +14,7 @@ urlpatterns = [
     path('profile/', OfficeAdminProfileView.as_view(), name='office_profile'),
     path('employee-management/', EmployeeManagementView.as_view(), name='office_employee_management'),
     path('leave-approval/', LeaveApprovalView.as_view(), name='office_leave_approval'),
-    path('payroll/', PayrollView.as_view(), name='office_payroll'),
-    path("generate-payslips/", GeneratePayslipsView.as_view(), name="generate_payslips"),
     path('mypayroll/', MyPayrollView.as_view(), name='office_my_payroll'),
-    path("payroll/export/", ExportPayslipsView.as_view(), name="export_payslips"),
     path('mypayroll/download/', DownloadPayslipPDFView.as_view(), name='download_my_payslipO'),
     path('add-employee/', AddEmployeeView.as_view(), name='office_add_employee'),
     path('leave-management/', LeaveManagementView.as_view(), name='office_leave_management'),

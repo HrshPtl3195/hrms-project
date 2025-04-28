@@ -142,7 +142,9 @@
                                             <th class="px-4 py-3 text-left">
                                                 Employee</th>
                                             <th class="px-4 py-3 text-left">
-                                                Position</th>
+                                                Designation</th>
+                                            <th class="px-4 py-3 text-left">
+                                                Month</th>
                                             <th class="px-4 py-3 text-left">
                                                 Base Salary</th>
                                             <th class="px-4 py-3 text-left">
@@ -151,6 +153,8 @@
                                                 Net Salary</th>
                                             <th class="px-4 py-3 text-left">
                                                 Status</th>
+                                            <th class="px-4 py-3 text-left">
+                                                Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-700">
@@ -169,6 +173,7 @@
                                                 </div>
                                             </td>
                                             <td class="px-4 py-3">{{ payslip.designation|default:"N/A" }}</td>
+                                            <td class="px-4 py-3">{{ payslip.period }}</td>
                                             <td class="px-4 py-3">${{ payslip.base_salary }}</td>
                                             <td class="px-4 py-3">${{ payslip.bonuses }}</td>
                                             <td class="px-4 py-3">${{ payslip.total }}</td>
@@ -178,6 +183,29 @@
                                                     Processed
                                                 </span>
                                             </td>
+                                            <form id="downloadForm" method="post"
+                                                action="{% url 'hr_download_my_payslip' %}" target="_blank"
+                                                style="display: none;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="employee_id" id="employee_id_input">
+                                                <input type="hidden" name="payslip_id" id="payslip_id_input">
+                                            </form>
+
+                                            <td class="px-4 py-3">
+                                                <button
+                                                    onclick="submitDownloadForm('{{ payslip.employee_id }}', '{{ payslip.payslip_id }}')"
+                                                    class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </td>
+
+                                            <script>
+                                                function submitDownloadForm(employeeId, payslipId) {
+                                                    document.getElementById('employee_id_input').value = employeeId;
+                                                    document.getElementById('payslip_id_input').value = payslipId;
+                                                    document.getElementById('downloadForm').submit();
+                                                }
+                                            </script>
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -239,10 +267,10 @@
                 {% for emp in employee_list %}
                 <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-100 cursor-pointer">
                     <input type="checkbox" class="emp-checkbox" value="{{ emp.employee_id }}"
-                        data-name="{{ emp.full_name }}" data-department="{{ emp.department }}">
+                        data-name="{{ emp.full_name }}" data-designation="{{ emp.designation }}">
                     <div>
                         <div class="font-semibold text-sm">{{ emp.full_name }}</div>
-                        <div class="text-xs text-gray-600">ID: EMP{{ emp.employee_id }} • {{ emp.department }}</div>
+                        <div class="text-xs text-gray-600">ID: EMP{{ emp.employee_id }} • {{ emp.designation }}</div>
                     </div>
                 </label>
                 {% endfor %}
