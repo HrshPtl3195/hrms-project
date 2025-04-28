@@ -95,18 +95,14 @@ class LogoutView(View):
 
 class HRAdminDashboardView(LoginRequiredMixin, View):
     def get(self, request):
-        print("\n||  Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_dashboard_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
@@ -355,18 +351,14 @@ class HRAdminDashboardView(LoginRequiredMixin, View):
 
 class OfficeAdminDashboardView(LoginRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_dashboard_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
@@ -591,12 +583,10 @@ class OfficeAdminDashboardView(LoginRequiredMixin, TemplateView):
 
 class EmployeeDashboardView(LoginRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Employee Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):
@@ -789,18 +779,14 @@ class ChooseRoleView(LoginRequiredMixin, TemplateView):
 
 class HybridDashboardView(LoginRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_dashboard_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
@@ -1025,12 +1011,10 @@ class HybridDashboardView(LoginRequiredMixin, TemplateView):
 
 class HybridEmployeeDashboardView(LoginRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Employee Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):

@@ -37,19 +37,15 @@ class HybridRequiredMixin(LoginRequiredMixin):
 
 class HybridDashboardView(HybridRequiredMixin, View):
     def get(self, request):
-        print("\n||  Dashboard Page Visited!  ||\n")
       
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_dashboard_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
@@ -274,13 +270,11 @@ class HybridDashboardView(HybridRequiredMixin, View):
 
 class EmployeeDashboardView(HybridRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Employee Dashboard Page Visited!  ||\n")
         
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):
@@ -1292,7 +1286,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
     template_name = "hybrid/office_admin/add_employee.html"
 
     def dispatch(self, request, *args, **kwargs):
-        print("\n||  Add Employee Page Visited!  ||\n")
         if not request.user.is_authenticated:
             return redirect('login')  # Redirect unauthenticated users to login
         if request.user.u_role.lower() != 'hybrid':
@@ -1304,13 +1297,10 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_employee_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
             
         except Exception as e:
             logger.error("❌ Error fetching data:", exc_info=True)
@@ -1359,7 +1349,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             return f"{first_name[:2].lower()}{last_name[:2].lower()}{email[:2].lower()}_{dob}"
 
         emp_file_id = generate_employee_file_id(firstName, lastName, currentEmail, dob)
-        # print(f"🔹 Generated Unique Employee File ID: {emp_file_id}")
 
         # Define File Saving Helper Function
         def save_uploaded_file(file, folder_name, emp_file_id, doc_type):
@@ -1526,8 +1515,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
         reference_contact_str = ",".join(reference_contacts)
         reference_email_str = ",".join(reference_emails)
         relationship_str = ",".join(reference_relationships)
-
-        # print("\n", reference_name_str, reference_email_str, reference_contact_str, relationship_str)
         
         # Document Upload
         profileImage = profile_image_path if profile_image_path else ""
@@ -1547,7 +1534,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
         print(f"Permit: {prNumber}, {prInforceFrom}, {prExpiryDate}")
         print(f"SIN: {sinNumber}, {sinIssueDate}, {sinExpiryDate}")
         print(f"History: {companyName}, {designationEH}, {employmentFrom}, {employmentTo}")
-        # print(f"{relationship}: {referenceName}, {referencePhone}, {referenceEmail}, {relationship}")
         
         
         print("\n📂 Uploaded Files", request.FILES.keys())
@@ -1699,7 +1685,7 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
             print(f"Provided: {len(params)}") 
             # Execute stored procedure
             cursor.execute("""
-            EXEC ManageEmployees ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?; 
+            EXEC ManageEmployees ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?; 
             """,params)
             
             # Commit transaction
@@ -1730,7 +1716,6 @@ class AddEmployeeView(HybridRequiredMixin, TemplateView):
 
 class LeaveManagementView(HybridRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n|| Leave Management Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
@@ -2322,18 +2307,14 @@ class CancelLeaveRequestView(HybridRequiredMixin, View):
 
 class RequestLeaveView(HybridRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n|| Leave Request Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}

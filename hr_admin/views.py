@@ -35,18 +35,14 @@ class HRAdminRequiredMixin(LoginRequiredMixin):
 
 class HRAdminDashboardView(HRAdminRequiredMixin, View):
     def get(self, request):
-        print("\n||  Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_dashboard_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
@@ -1123,7 +1119,6 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
     template_name = "hr_admin/add_employee.html"
 
     def dispatch(self, request, *args, **kwargs):
-        print("\n||  Add Employee Page Visited!  ||\n")
         if not request.user.is_authenticated:
             return redirect('login')  # Redirect unauthenticated users to login
         if request.user.u_role.lower() != 'hr_admin':
@@ -1135,14 +1130,11 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_employee_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
-            
+                
         except Exception as e:
             logger.error("❌ Error fetching data:", exc_info=True)
             data = {}
@@ -1190,7 +1182,6 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
             return f"{first_name[:2].lower()}{last_name[:2].lower()}{email[:2].lower()}_{dob}"
 
         emp_file_id = generate_employee_file_id(firstName, lastName, currentEmail, dob)
-        # print(f"🔹 Generated Unique Employee File ID: {emp_file_id}")
 
         # Define File Saving Helper Function
         def save_uploaded_file(file, folder_name, emp_file_id, doc_type):
@@ -1275,15 +1266,8 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
         
         criminalRecord = "YES" if request.POST.get("criminalRecord", "no").strip().lower() == "yes" else "NO"
         
-        userRole = request.POST.get("userRole", "").strip().upper()
-        if userRole == "OA":
-            userRole = "OFFICE_ADMIN"
-        elif userRole == "EM":
-            userRole = "EMPLOYEE"
-        elif userRole == "HY":
-            userRole = "HYBRID"
-        # print(userRole)
-
+        userRole = "EMPLOYEE"
+        
         currentPhone = request.POST.get("currentPhone")
         permanentPhone = request.POST.get("permanentPhone")
         currentEmail = request.POST.get("currentEmail")
@@ -1365,8 +1349,6 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
         reference_email_str = ",".join(reference_emails)
         relationship_str = ",".join(reference_relationships)
 
-        # print("\n", reference_name_str, reference_email_str, reference_contact_str, relationship_str)
-        
         # Document Upload
         profileImage = profile_image_path if profile_image_path else ""
         offerLetterFile = offer_letter_path if offer_letter_path else ""
@@ -1385,8 +1367,6 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
         print(f"Permit: {prNumber}, {prInforceFrom}, {prExpiryDate}")
         print(f"SIN: {sinNumber}, {sinIssueDate}, {sinExpiryDate}")
         print(f"History: {companyName}, {designationEH}, {employmentFrom}, {employmentTo}")
-        # print(f"{relationship}: {referenceName}, {referencePhone}, {referenceEmail}, {relationship}")
-        
         
         print("\n📂 Uploaded Files", request.FILES.keys())
         if passportFile:
@@ -1537,7 +1517,7 @@ class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
             print(f"Provided: {len(params)}") 
             # Execute stored procedure
             cursor.execute("""
-            EXEC ManageEmployees ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?; 
+            EXEC ManageEmployees ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?; 
             """,params)
             
             # Commit transaction
@@ -1607,9 +1587,7 @@ class LeaveApprovalView(HRAdminRequiredMixin, TemplateView):
             # Total number of leaves applied
             cursor.execute(f"SELECT MAX(total_leaves) FROM leaves")
             total_leaves = cursor.fetchone()[0]
-            # print(total_leaves)
             total_leaves = 15 if total_leaves == None else total_leaves
-            # print(total_leaves)
 
             # Get Profile Image (First Available)
             cursor.execute(f"""
@@ -2134,7 +2112,6 @@ class GeneratePayslipsView(HRAdminRequiredMixin, View):
                             WHERE e.employee_id = %s
                             """, [employee_id])
                         result = cursor.fetchone()
-                        print(result)
                         if result:
                             full_name, email = result
                             emails_to_notify.append((full_name, email))

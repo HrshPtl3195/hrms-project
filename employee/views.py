@@ -34,12 +34,10 @@ class EmployeeRequiredMixin(LoginRequiredMixin):
 
 class EmployeeDashboardView(EmployeeRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n||  Employee Dashboard Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):
@@ -616,7 +614,6 @@ class EmployeeProfileView(EmployeeRequiredMixin, TemplateView):
 
 class LeaveManagementView(EmployeeRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n|| Leave Management Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
@@ -893,18 +890,14 @@ class CancelLeaveRequestView(EmployeeRequiredMixin, View):
 
 class RequestLeaveView(EmployeeRequiredMixin, TemplateView):
     def get(self, request):
-        print("\n|| Leave Request Page Visited!  ||\n")
         if not hasattr(request.user, "user_id"):
             return redirect("login")
 
         try:
-            # logger.info(f"🔹 Fetching data for user ID: {request.user.user_id}")
             data = self.get_data(request.user.user_id)
             
             if data.get("profile_image"):
                 data["profile_image"] = data["profile_image"].replace("\\", "/")
-            # logger.debug(data)
-            # print()
         except Exception as e:
             logger.error("\n❌ Error fetching data:", exc_info=True)
             data = {}
