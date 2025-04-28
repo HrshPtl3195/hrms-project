@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'hr_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'hr_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300">
@@ -114,22 +116,6 @@
                                         <option>Other</option>
                                     </select>
                                 </div>
-                                <div class="space-y-3 ">
-                                    <label class="block text-sm font-medium text-gray-600">Criminal Record <span
-                                            class="text-red-500">*</span></label>
-                                    <div class="flex items-center space-x-4">
-                                        <label for="criminalRecordYes" class="flex items-center">
-                                            <input type="radio" id="criminalRecordYes" name="criminalRecord" value="yes"
-                                                class="form-radio text-blue-500">
-                                            <span class="ml-2">Yes</span>
-                                        </label>
-                                        <label for="criminalRecordNo" class="flex items-center">
-                                            <input type="radio" id="criminalRecordNo" name="criminalRecord" value="no"
-                                                class="form-radio text-blue-500" checked>
-                                            <span class="ml-2">No</span>
-                                        </label>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -154,25 +140,19 @@
                                     class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-custom" />
                                 <p id="nationalityWarning" class="text-red-500 text-sm hidden"></p>
                             </div>
-
-                            <div class="space-y-3">
-                                <label class="block text-sm font-medium text-gray-600">User Role <span
+                            <div class="space-y-3 ">
+                                <label class="block text-sm font-medium text-gray-600">Criminal Record <span
                                         class="text-red-500">*</span></label>
                                 <div class="flex items-center space-x-4">
-                                    <label for="userRoleOA" class="flex items-center">
-                                        <input type="radio" id="userRoleOA" name="userRole" value="OA"
+                                    <label for="criminalRecordYes" class="flex items-center">
+                                        <input type="radio" id="criminalRecordYes" name="criminalRecord" value="yes"
+                                            class="form-radio text-blue-500">
+                                        <span class="ml-2">Yes</span>
+                                    </label>
+                                    <label for="criminalRecordNo" class="flex items-center">
+                                        <input type="radio" id="criminalRecordNo" name="criminalRecord" value="no"
                                             class="form-radio text-blue-500" checked>
-                                        <span class="ml-2">Office Admin</span>
-                                    </label>
-                                    <label for="userRoleEM" class="flex items-center">
-                                        <input type="radio" id="userRoleEM" name="userRole" value="EM"
-                                            class="form-radio text-blue-500">
-                                        <span class="ml-2">Employee</span>
-                                    </label>
-                                    <label for="userRoleHY" class="flex items-center">
-                                        <input type="radio" id="userRoleHY" name="userRole" value="HY"
-                                            class="form-radio text-blue-500">
-                                        <span class="ml-2">Both</span>
+                                        <span class="ml-2">No</span>
                                     </label>
                                 </div>
                             </div>

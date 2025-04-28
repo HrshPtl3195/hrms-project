@@ -172,6 +172,7 @@ EMAIL_HOST_PASSWORD = "xcgu ztxr oxxs cxtq"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 HR_ADMIN_EMAIL = "iharshpsycoder@gmail.com"
 
+
 # Increase max upload size
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB

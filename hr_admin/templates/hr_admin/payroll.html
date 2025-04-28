@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-1100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'hr_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'hr_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -193,7 +195,7 @@
 
                                             <td class="px-4 py-3">
                                                 <button
-                                                    onclick="submitDownloadForm('{{ payslip.employee_id }}', '{{ payslip.payslip_id }}')"
+                                                    onclick="downloadPayslip('{{ payslip.employee_id }}', '{{ payslip.payslip_id }}')"
                                                     class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
                                                     <i class="fas fa-download"></i>
                                                 </button>
@@ -203,7 +205,6 @@
                                                 function submitDownloadForm(employeeId, payslipId) {
                                                     document.getElementById('employee_id_input').value = employeeId;
                                                     document.getElementById('payslip_id_input').value = payslipId;
-                                                    document.getElementById('downloadForm').submit();
                                                 }
                                             </script>
                                         </tr>
@@ -593,16 +594,16 @@
 
     <!-- ✅ Toasts -->
     <div id="toastSuccess"
-        class="fixed bottom-6 right-6 bg-green-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ✅ Payslips generated successfully!
     </div>
 
     <div id="toastError"
-        class="fixed bottom-6 right-6 bg-red-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ❌ Failed to generate payslips. Try again!
     </div>
     <div id="toastWarning"
-        class="fixed bottom-6 right-6 bg-yellow-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-yellow-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ⚠️ Please select at least one employee.
     </div>
     <!-- 🔽 Export Modal -->
@@ -631,7 +632,16 @@
             </div>
         </div>
     </div>
+    <!-- ✅ Toasts -->
+    <div id="toastSuccessExport"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Payslips Data Exported successfully!
+    </div>
 
+    <div id="toastErrorExport"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to Export Payslip Data. Try again!
+    </div>
     <script>
         function toggleExportModal() {
             document.getElementById("exportModal").classList.toggle("hidden");
@@ -644,28 +654,112 @@
             document.getElementById("downloadPayrollModal").classList.add("hidden");
         }
 
+        function showExportToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
+
         function handlePayrollDownload(format) {
-            const button = format === "excel" ? document.getElementById("downloadPayrollExcelBtn") : document.getElementById("downloadPayrollPDFBtn");
+            const button = format === "excel"
+                ? document.getElementById("downloadPayrollExcelBtn")
+                : document.getElementById("downloadPayrollPDFBtn");
+
             const spinner = button.querySelector(".spinner");
             const label = button.querySelector(".btn-label");
 
             spinner.classList.remove("hidden");
             label.classList.add("opacity-50");
 
-            // ✅ Corrected path to match urls.py
-            const link = document.createElement("a");
-            link.href = `/hr-admin/payroll/export/?format=${format}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            fetch(`/hr-admin/payroll/export/?format=${format}`, {
+                method: 'GET',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Export failed");
 
+                    const disposition = response.headers.get("Content-Disposition");
+                    const filename = disposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)?.[1] || "PayrollExport";
+
+                    return response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename.replace(/['"]/g, "");
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        showExportToast("toastSuccessExport");
+                    });
+                })
+                .catch(() => {
+                    showExportToast("toastErrorExport");
+                })
+                .finally(() => {
+                    spinner.classList.add("hidden");
+                    label.classList.remove("opacity-50");
+                    closeDownloadPayrollModal();
+                });
+        }
+    </script>
+    <!-- ✅ Toasts -->
+    <div id="toastSuccess"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Payslips generated successfully!
+    </div>
+
+    <div id="toastError"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to generate payslips. Try again!
+    </div>
+    <script>
+        function showToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove('hidden');
             setTimeout(() => {
-                spinner.classList.add("hidden");
-                label.classList.remove("opacity-50");
-                closeDownloadPayrollModal();
-            }, 1000);
+                toast.classList.add('hidden');
+            }, 3000);
         }
 
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+
+        function downloadPayslip(employeeId, payslipId) {
+            const formData = new FormData();
+            formData.append("employee_id", employeeId);
+            formData.append("payslip_id", payslipId);
+            formData.append("csrfmiddlewaretoken", getCSRFToken());
+
+            fetch("{% url 'hr_download_my_payslip' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to generate payslip");
+                    return response.blob();
+                })
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    link.download = "Payslip.pdf";
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    showToast("toastSuccess");
+                })
+                .catch(() => {
+                    showToast("toastError");
+                });
+        }
     </script>
 
 </body>

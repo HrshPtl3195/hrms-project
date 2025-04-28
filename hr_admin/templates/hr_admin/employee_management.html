@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'hr_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'hr_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -236,7 +238,7 @@
     </div>
     <!-- ✅ Success Toast -->
     <div id="downloadSuccessToast"
-        class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
         ✅ Employee list downloaded successfully!
     </div>
 
@@ -247,7 +249,7 @@
     </div>
     <!-- ✅ Delete Success Toast -->
     <div id="deleteSuccessToast"
-        class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
         ✅ Employee deleted successfully!
     </div>
 
@@ -476,7 +478,7 @@
                 toast.className = "fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 text-white";
 
                 if (status === "success") {
-                    toast.classList.add("bg-green-500");
+                    toast.classList.add("bg-green-300");
                     toast.innerHTML = "✅ Employee added successfully!";
                 } else {
                     toast.classList.add("bg-red-300");

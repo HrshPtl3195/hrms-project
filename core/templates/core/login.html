@@ -27,7 +27,9 @@
         <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                    <a href="{% url 'login' %}">
+                        <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                    </a>
                 </div>
             </div>
         </div>
@@ -240,17 +242,17 @@
     </script>
     <!-- ✅ Toasts -->
     <div id="toastSuccess"
-        class="fixed bottom-6 right-6 bg-green-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ✅ Success!
     </div>
 
     <div id="toastError"
-        class="fixed bottom-6 right-6 bg-red-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ❌ Error occurred!
     </div>
 
     <div id="toastWarning"
-        class="fixed bottom-6 right-6 bg-yellow-400 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        class="fixed bottom-6 right-6 bg-yellow-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
         ⚠️ Warning!
     </div>
 
@@ -293,6 +295,25 @@
             animation: fade-in-down 0.3s ease-out;
         }
     </style>
+
+    <div id="loginHelpToast"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Your message has been sent successfully!
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (localStorage.getItem("helpToast") === "success") {
+                const toast = document.getElementById("loginHelpToast");
+                toast.classList.remove("hidden");
+                setTimeout(() => {
+                    toast.classList.add("hidden");
+                    localStorage.removeItem("helpToast");
+                }, 3000);
+            }
+        });
+    </script>
+
 </body>
 
 </html>

@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'office_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'office_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -268,6 +270,14 @@
                 btn.disabled = false;
             });
         }
+        function showToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
+
         function handleDownload(format) {
             const url = new URL("{% url 'office_leave_export' %}", window.location.origin);
             url.searchParams.append("format", format);
@@ -293,10 +303,14 @@
                     document.body.appendChild(downloadLink);
                     downloadLink.click();
                     document.body.removeChild(downloadLink);
-                    closeDownloadModal();
+
+                    showToast("downloadSuccessToast");
                 })
                 .catch(error => {
-                    alert("Download failed. Please try again.");
+                    console.error("Error during download:", error);
+                    showToast("downloadErrorToast");
+                })
+                .finally(() => {
                     closeDownloadModal();
                 });
         }

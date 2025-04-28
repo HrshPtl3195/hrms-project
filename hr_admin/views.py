@@ -64,7 +64,11 @@ class HRAdminDashboardView(HRAdminRequiredMixin, View):
             user_name = user[0] + " " + user[2]
 
             # Total number of employees
-            cursor.execute("SELECT COUNT(*) FROM employees WHERE is_deleted = 0")
+            cursor.execute("""SELECT COUNT(*) 
+                FROM employees e
+                JOIN users u ON e.user_id = u.user_id
+                WHERE e.is_deleted = 0 AND u.u_role != 'HR_ADMIN';
+                """)
             total_employees = cursor.fetchone()[0]
 
             # Total number of pending leaves

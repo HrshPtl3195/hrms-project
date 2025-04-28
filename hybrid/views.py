@@ -67,7 +67,11 @@ class HybridDashboardView(HybridRequiredMixin, View):
             user_name = user[0] + " " + user[2]
 
             # Total number of employees
-            cursor.execute("SELECT COUNT(*) FROM employees WHERE is_deleted = 0")
+            cursor.execute("""SELECT COUNT(*) 
+                FROM employees e
+                JOIN users u ON e.user_id = u.user_id
+                WHERE e.is_deleted = 0 AND u.u_role != 'HR_ADMIN';
+                """)
             total_employees = cursor.fetchone()[0]
 
             # Total number of pending leaves
@@ -2082,8 +2086,7 @@ class LeaveExportView(HybridRequiredMixin, View):
                 FROM leaves l
                 JOIN employees e ON l.employee_id = e.employee_id
                 JOIN users u ON e.user_id = u.user_id
-                WHERE u.u_role IN ('EMPLOYEE', 'OFFICE_ADMIN')
-                AND approved_by = {request.user.user_id}
+                WHERE u.u_role IN ('EMPLOYEE')
                 ORDER BY l.created_at DESC""")
             rows = cursor.fetchall()
 
@@ -2392,16 +2395,18 @@ class RequestLeaveView(HybridRequiredMixin, TemplateView):
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT employee_id FROM employees WHERE user_id = %s", [user_id])
+                cursor.execute("SELECT employee_id, first_name, middle_name, last_name FROM employees WHERE user_id = %s", [user_id])
                 result = cursor.fetchone()
 
                 if not result:
                     return JsonResponse({"success": False, "error": "Employee not found."})
 
-                employee_id = result[0]
+                employee_id, first_name, middle_name, last_name = result
+                full_name = f"{first_name} {middle_name} {last_name}".strip()
                 apply_date = date.today()
                 status = 'PENDING'
 
+                # Insert leave record
                 cursor.execute("""
                     INSERT INTO leaves (
                         employee_id, leave_type, L_apply_date, 
@@ -2417,7 +2422,34 @@ class RequestLeaveView(HybridRequiredMixin, TemplateView):
                     status
                 ])
 
-                return JsonResponse({"success": True})
+            # Email HR Admin
+            subject = f"📝 New Leave Request from {full_name}"
+            message = f"""
+Dear HR Admin,
+
+A new leave request has been submitted by the following employee:
+
+👤 Name: {full_name}
+📅 Leave Type: {leave_type}
+📆 Start Date: {start_date}
+📆 End Date: {end_date}
+📝 Reason: {reason}
+📤 Applied On: {apply_date}
+
+Please review and take appropriate action in the HRMS portal.
+
+Regards,  
+HRMS System
+            """
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.HR_ADMIN_EMAIL],
+                fail_silently=False,
+            )
+
+            return JsonResponse({"success": True})
 
         except Exception as e:
             logger.error("❌ Error submitting leave request", exc_info=True)

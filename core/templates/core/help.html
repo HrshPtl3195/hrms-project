@@ -24,7 +24,9 @@
         <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                    <a href="{% url 'login' %}">
+                        <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                    </a>
                 </div>
             </div>
         </div>
@@ -32,26 +34,13 @@
 
     <!-- Main Section -->
     <main class="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-3.5rem)] py-12 px-4 sm:px-6 lg:px-8">
-        <div class="w-full px-4 py-12">
+        <div class="w-full px-4">
             <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">Help & Support</h1>
 
             <div class="max-w-xl w-full mx-auto">
-                <div class="bg-gray-100 shadow-xl rounded-xl p-8 space-y-6">
-                    <!-- Django Flash Messages -->
-                    {% if messages %}
-                    {% for message in messages %}
-                    <div class="p-3 rounded-md text-sm 
-                            {% if message.tags == 'success' %} bg-green-200 text-green-800 
-                            {% elif message.tags == 'error' %} bg-red-200 text-red-800 
-                            {% elif message.tags == 'warning' %} bg-yellow-200 text-yellow-800 
-                            {% else %} bg-gray-200 text-gray-800 {% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-
+                <div class="bg-gray-100 shadow-xl rounded-xl p-8">
                     <!-- Help & Support Form -->
-                    <form method="POST" action="{% url 'help' %}" class="space-y-4">
+                    <form id="helpForm" class="space-y-4">
                         {% csrf_token %}
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-900 mb-1">Name</label>
@@ -73,9 +62,11 @@
                             <textarea id="message" name="message" rows="4" required
                                 class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:ring-2 focus:ring-custom focus:border-transparent"></textarea>
                         </div>
-                        <button type="submit"
+                        <button id="submitMessageBtn" type="button"
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-custom hover:bg-custom/90 focus:ring-2 focus:ring-custom transition-all duration-200 transform hover:scale-[1.02]">
-                            Send Message
+                            <span id="submitMessageText">Send Message</span>
+                            <span id="submitSpinner"
+                                class="hidden ml-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                         </button>
                     </form>
                     <div class="text-center mt-4">
@@ -104,7 +95,75 @@
             </div>
         </div>
     </footer>
+    <!-- ✅ Success Toast (only used on Login page via localStorage) -->
+    <div id="helpSuccessToast"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Your message was sent successfully!
+    </div>
 
+    <!-- ❌ Failure Toast -->
+    <div id="helpFailureToast"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to send your message. Please try again.
+    </div>
+
+    <!-- ⚠️ Warning Toast -->
+    <div id="toastWarning"
+        class="fixed bottom-6 right-6 bg-yellow-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ⚠️ Please fill out all required fields.
+    </div>
+
+    <script>
+        function showToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove("hidden");
+            setTimeout(() => toast.classList.add("hidden"), 3000);
+        }
+
+        document.getElementById("submitMessageBtn").addEventListener("click", function () {
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const subject = document.getElementById("subject").value.trim();
+            const message = document.getElementById("message").value.trim();
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            if (!name || !email || !subject || !message) {
+                showToast("helpFailureToast");
+                return;
+            }
+
+            // UI feedback
+            const submitText = document.getElementById("submitMessageText");
+            const spinner = document.getElementById("submitSpinner");
+            submitText.innerText = "Submitting Message...";
+            spinner.classList.remove("hidden");
+
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("email", email);
+            formData.append("subject", subject);
+            formData.append("message", message);
+            formData.append("csrfmiddlewaretoken", csrfToken);
+
+            fetch("{% url 'help' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed");
+                    // ✅ Set flag to show toast on login page
+                    localStorage.setItem("helpToast", "success");
+                    window.location.href = "{% url 'login' %}";
+                })
+                .catch(() => {
+                    submitText.innerText = "Send Message";
+                    spinner.classList.add("hidden");
+                    showToast("helpFailureToast");
+                });
+        });
+    </script>
 </body>
-
 </html>

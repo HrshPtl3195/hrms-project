@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Logo"  class="h-10 w-auto" />
+                <a href="{% url 'employee_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'employee_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -140,11 +142,10 @@
                                             <td class="px-4 py-3">{{ record.deductions }}</td>
                                             <td class="px-4 py-3 font-semibold text-green-700">{{ record.net }}</td>
                                             <td class="px-4 py-3 text-left">
-                                                <a href="{% url 'e_download_my_payslip' %}" target="_blank">
-                                                    <button class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
-                                                        <i class="fas fa-download"></i>
-                                                    </button>
-                                                </a>
+                                                <button onclick="downloadPayslip()"
+                                                    class="px-2 py-1 text-blue-400 hover:text-blue-600 bg-blue-400/10 hover:bg-blue-600/20 rounded">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                         {% empty %}
@@ -162,4 +163,50 @@
             </div>
         </main>
     </div>
+    <!-- ✅ Toasts -->
+    <div id="toastSuccess"
+        class="fixed bottom-6 right-6 bg-green-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ✅ Payslips generated successfully!
+    </div>
+
+    <div id="toastError"
+        class="fixed bottom-6 right-6 bg-red-300 text-white px-5 py-3 rounded-lg shadow-lg hidden z-50">
+        ❌ Failed to generate payslips. Try again!
+    </div>
+    <script>
+        function showToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function downloadPayslip() {
+            fetch("{% url 'e_download_my_payslip' %}", {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to generate payslip");
+                }
+                return response.blob();
+            }).then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Payslip.pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showToast("toastSuccess");
+            }).catch(err => {
+                console.error("Download failed:", err);
+                showToast("toastError");
+            });
+        }
+    </script>
+
 </body>

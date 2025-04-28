@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'hybrid_office_admin_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'hybrid_office_admin_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -30,7 +32,7 @@
                         <img src="/media/{{ profile_image }}" alt="Admin" class="w-12 h-12 rounded-full" />
                         <div class="ml-3">
                             <h3 class="font-medium text-gray-600">{{ user_name }}</h3>
-                             <p class="text-sm text-gray-600">Office Admin</p>
+                            <p class="text-sm text-gray-600">Office Admin</p>
                         </div>
                     </div>
                 </div>
@@ -189,9 +191,10 @@
                             <div class="mt-6 flex items-center justify-between">
                                 <!-- Pagination Info -->
                                 <div class="text-gray-600 mt-2 pagination-info">
-                                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{
+                                    page_obj.paginator.count }} entries
                                 </div>
-                            
+
                                 <!-- Pagination Buttons -->
                                 {% if page_obj.paginator.num_pages > 1 %}
                                 <div class="flex space-x-2 pagination">
@@ -199,21 +202,21 @@
                                     <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
                                     {% endif %}
-                            
+
                                     {% for num in page_obj.paginator.page_range %}
                                     <a href="?page={{ num }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 {% if page_obj.number == num %}bg-custom text-white{% else %}bg-gray-200{% endif %} rounded hover:bg-gray-300">
                                         {{ num }}
                                     </a>
                                     {% endfor %}
-                            
+
                                     {% if page_obj.has_next %}
                                     <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}"
                                         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
                                     {% endif %}
                                 </div>
                                 {% endif %}
-                            </div>                            
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -254,7 +257,7 @@
         class="fixed bottom-6 right-6 bg-red-300 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
         ❌ Failed to download file. Please try again.
     </div>
-    
+
     <script>
         function openDownloadModal() {
             document.getElementById("downloadModal").classList.remove("hidden");
@@ -268,8 +271,15 @@
                 btn.disabled = false;
             });
         }
+        function showToast(id) {
+            const toast = document.getElementById(id);
+            toast.classList.remove("hidden");
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
         function handleDownload(format) {
-            const url = new URL("{% url 'hr_leave_export' %}", window.location.origin);
+            const url = new URL("{% url 'hybrid_office_admin_leave_export' %}", window.location.origin);
             url.searchParams.append("format", format);
 
             const buttonId = format === "pdf" ? "downloadPDFBtn" : "downloadExcelBtn";
@@ -293,13 +303,18 @@
                     document.body.appendChild(downloadLink);
                     downloadLink.click();
                     document.body.removeChild(downloadLink);
-                    closeDownloadModal();
+
+                    showToast("downloadSuccessToast");
                 })
                 .catch(error => {
-                    alert("Download failed. Please try again.");
+                    console.error("Error during download:", error);
+                    showToast("downloadErrorToast");
+                })
+                .finally(() => {
                     closeDownloadModal();
                 });
         }
+
     </script>
 
 </body>

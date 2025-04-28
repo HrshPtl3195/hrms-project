@@ -22,7 +22,9 @@
     <div class="min-h-screen flex">
         <aside class="w-64 bg-gray-100 border-r border-gray-300">
             <div class="p-6">
-                <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                <a href="{% url 'office_dashboard' %}">
+                    <img src="{% static 'images/aureus.png' %}" alt="Company Logo" class="h-10 w-auto" />
+                </a>
             </div>
             <a href="{% url 'office_dashboard' %}">
                 <div class="px-4 py-6 border-b border-gray-300 hover:bg-gray-200">
@@ -127,8 +129,8 @@
                 <div class="grid grid-cols-3 gap-6">
                     <div class="col-span-3">
                         <div class="bg-gray-100 p-6 rounded-lg mb-6">
-                            <form id="leaveForm" class="space-y-6" action="{% url 'office_request_leave' %}" method="POST"
-                                autocomplete="off">
+                            <form id="leaveForm" class="space-y-6" action="{% url 'office_request_leave' %}"
+                                method="POST" autocomplete="off">
                                 {% csrf_token %}
                                 <div class="grid grid-cols-3 gap-6">
                                     <div class="space-y-2"><label class="block text-sm font-medium text-gray-600">Leave
@@ -168,8 +170,11 @@
                                         class="px-4 py-2 bg-gray-300 text-gray-900 hover:text-white rounded-lg hover:bg-gray-600 active:transform active:scale-95 transition-transform"
                                         onclick="history.back()">Cancel</button>
                                     <button type="submit" id="submitBtn"
-                                        class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95">Submit
-                                        Request</button>
+                                        class="px-4 py-2 bg-custom text-white rounded-lg hover:bg-blue-800 transition duration-200 ease-in-out active:transform active:scale-95 flex items-center justify-center gap-2">
+                                        <span id="submitBtnText">Submit Request</span>
+                                        <span id="submitSpinner"
+                                            class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -292,7 +297,12 @@
         });
         document.getElementById("leaveForm").addEventListener("submit", function (event) {
             event.preventDefault(); // Prevent default form submission
+            // Show spinner and update button text
+            document.getElementById("submitBtnText").textContent = "Submitting Request...";
+            document.getElementById("submitSpinner").classList.remove("hidden");
 
+            // Optional: Disable button to prevent multiple submissions
+            document.getElementById("submitBtn").disabled = true;
             const form = event.target;
             const formData = new FormData(form);
 
