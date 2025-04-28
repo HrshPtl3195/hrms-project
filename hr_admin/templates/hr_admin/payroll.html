@@ -285,14 +285,17 @@
                 <button id="cancelPayslipModal" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancel</button>
                 <button id="showPayslipInputs"
                     class="px-4 py-2 bg-custom text-white rounded hover:bg-custom/90">Next</button>
-
             </div>
 
             <div id="formButtons" class="flex justify-end mt-6 space-x-4 hidden">
                 <button onclick="closePayslipModal()"
                     class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancel</button>
-                <button id="submitPayslipBtn" class="px-4 py-2 rounded bg-custom text-white hover:bg-custom/90">Generate
-                    Payslips</button>
+                <button id="submitPayslipBtn"
+                    class="px-4 py-2 rounded bg-custom text-white hover:bg-custom/90 flex items-center justify-center gap-2">
+                    <span id="payslipBtnText">Generate Payslips</span>
+                    <span id="payslipSpinner"
+                        class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -543,6 +546,10 @@
         document.getElementById("submitPayslipBtn").addEventListener("click", () => {
             const allRows = document.querySelectorAll("#payslipFormRows > div");
             const payload = [];
+
+            document.getElementById("payslipBtnText").textContent = "Generating...";
+            document.getElementById("payslipSpinner").classList.remove("hidden");
+            document.getElementById("submitPayslipBtn").disabled = true;
 
             allRows.forEach(row => {
                 const employee_id = row.querySelector("input[name='employee_id']").value;

@@ -1208,7 +1208,7 @@ class EmployeeExportView(HybridRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5].strftime("%b %d, %Y") if row[6] else ""
+                    row[5].strftime("%d-%m-%Y") if row[5] else ""
                 ])
 
             response = HttpResponse(
@@ -1240,7 +1240,7 @@ class EmployeeExportView(HybridRequiredMixin, View):
 
             for row in rows:
                 full_name = f"{row[0]} {row[1]} {row[2]}".strip()
-                joining_date = row[6].strftime("%b %d, %Y") if row[6] else ""
+                joining_date = row[5].strftime("%d-%m-%Y") if row[5] else ""
                 table_data.append([
                     full_name,
                     row[3],  # email
@@ -2103,8 +2103,8 @@ class LeaveExportView(HybridRequiredMixin, View):
                 ws.append([
                     full_name,
                     row[2],
-                    row[3].strftime("%b %d, %Y"),
-                    row[4].strftime("%b %d, %Y"),
+                    row[3].strftime("%d-%m-%Y"),
+                    row[4].strftime("%d-%m-%Y"),
                     row[6],
                     row[5]
                 ])
@@ -2129,8 +2129,8 @@ class LeaveExportView(HybridRequiredMixin, View):
                 table_data.append([
                     f"{row[0]} {row[1]}",
                     row[2],
-                    row[3].strftime("%b %d, %Y"),
-                    row[4].strftime("%b %d, %Y"),
+                    row[3].strftime("%d-%m-%Y"),
+                    row[4].strftime("%d-%m-%Y"),
                     row[6],
                     row[5]
                 ])

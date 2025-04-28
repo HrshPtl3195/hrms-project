@@ -1039,7 +1039,7 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
                     full_name,
                     row[3],  # email
                     row[4],  # designation
-                    row[5].strftime("%b %d, %Y") if row[5] else ""
+                    row[5].strftime("%d-%m-%Y") if row[5] else ""
                 ])
 
             response = HttpResponse(
@@ -1071,7 +1071,7 @@ class EmployeeExportView(HRAdminRequiredMixin, View):
 
             for row in rows:
                 full_name = f"{row[0]} {row[1]} {row[2]}".strip()
-                joining_date = row[6].strftime("%b %d, %Y") if row[6] else ""
+                joining_date = row[5].strftime("%d-%m-%Y") if row[5] else ""
                 table_data.append([
                     full_name,
                     row[3],  # email
@@ -1119,7 +1119,7 @@ class EmployeeDeleteView(HRAdminRequiredMixin, View):
             return response
 
 
-class AddEmployeeView(LoginRequiredMixin, TemplateView):
+class AddEmployeeView(HRAdminRequiredMixin, TemplateView):
     template_name = "hr_admin/add_employee.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -1850,8 +1850,8 @@ class LeaveExportView(HRAdminRequiredMixin, View):
                 ws.append([
                     full_name,
                     row[2],
-                    row[3].strftime("%b %d, %Y"),
-                    row[4].strftime("%b %d, %Y"),
+                    row[3].strftime("%d-%m-%Y"),
+                    row[4].strftime("%d-%m-%Y"),
                     row[6],
                     row[5]
                 ])
@@ -1875,8 +1875,8 @@ class LeaveExportView(HRAdminRequiredMixin, View):
                 table_data.append([
                     f"{row[0]} {row[1]}",
                     row[2],
-                    row[3].strftime("%b %d, %Y"),
-                    row[4].strftime("%b %d, %Y"),
+                    row[3].strftime("%d-%m-%Y"),
+                    row[4].strftime("%d-%m-%Y"),
                     row[6],
                     row[5]
                 ])
@@ -1893,7 +1893,7 @@ class LeaveExportView(HRAdminRequiredMixin, View):
             return response
 
 
-class PayrollView(LoginRequiredMixin, TemplateView):
+class PayrollView(HRAdminRequiredMixin, TemplateView):
     template_name = "hr_admin/payroll.html"
 
     def get(self, request):
@@ -1944,7 +1944,11 @@ class PayrollView(LoginRequiredMixin, TemplateView):
             cursor.execute("SELECT ISNULL(SUM(salary), 0) FROM payslips WHERE generated_by = %s", [user_id])
             total_payroll = cursor.fetchone()[0]
 
-            cursor.execute("SELECT COUNT(*) FROM employees WHERE is_deleted = 0 ")
+            cursor.execute("""SELECT COUNT(*) 
+                FROM employees e
+                JOIN users u ON e.user_id = u.user_id
+                WHERE e.is_deleted = 0 AND u.u_role != 'HR_ADMIN';
+                """)
             total_employees = cursor.fetchone()[0]
             
             cursor.execute("""
@@ -2073,6 +2077,8 @@ class GeneratePayslipsView(HRAdminRequiredMixin, View):
             month = today.strftime("%b").upper()
             year = today.year
 
+            emails_to_notify = []
+            
             with connection.cursor() as cursor:
                 for slip in payslips:
                     employee_id = slip["employee_id"]
@@ -2087,37 +2093,72 @@ class GeneratePayslipsView(HRAdminRequiredMixin, View):
                     total_deductions = cpp + ei + it
                     net = gross - total_deductions
                     
-                    
-                   # 1️⃣ Insert into payslips table (skip computed fields like salary/deductions/net_pay)
-                    cursor.execute("""
-                        INSERT INTO payslips (
-                            employee_id, regular_income, project_bonus, leadership_bonus,
-                            cpp, ei, income_tax,
-                            period_ending, pay_date, generated_by, emailed
-                        )
-                        OUTPUT INSERTED.payslip_id
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
-                    """, [
-                        employee_id, regular, project, leadership,
-                        cpp, ei, it,
-                        period_end, today, request.user.user_id
-                    ])
-                    payslip_id = cursor.fetchone()[0]
+                    if regular != 0:
+                        # 1️⃣ Insert into payslips table (skip computed fields like salary/deductions/net_pay)
+                        cursor.execute("""
+                            INSERT INTO payslips (
+                                employee_id, regular_income, project_bonus, leadership_bonus,
+                                cpp, ei, income_tax,
+                                period_ending, pay_date, generated_by, emailed
+                            )
+                            OUTPUT INSERTED.payslip_id
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
+                        """, [
+                            employee_id, regular, project, leadership,
+                            cpp, ei, it,
+                            period_end, today, request.user.user_id
+                        ])
+                        payslip_id = cursor.fetchone()[0]
 
-                    # 2️⃣ Insert into payroll_summary (manual computation needed for gross, net)
-                    cursor.execute("""
-                        INSERT INTO payroll_summary (
-                            employee_id, month_name, year,
-                            gross, cpp, ei, income_tax, net, payslip_id
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, [
-                        employee_id, month, year,
-                        gross, cpp, ei, it, net, payslip_id
-                    ])
+                        # 2️⃣ Insert into payroll_summary (manual computation needed for gross, net)
+                        cursor.execute("""
+                            INSERT INTO payroll_summary (
+                                employee_id, month_name, year,
+                                gross, cpp, ei, income_tax, net, payslip_id
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """, [
+                            employee_id, month, year,
+                            gross, cpp, ei, it, net, payslip_id
+                        ])
+
+                        # 3️⃣ Get employee email (assuming you have an employee table)
+                        cursor.execute("""
+                            SELECT 
+                                CONCAT(e.first_name, ' ', 
+                                    ISNULL(e.middle_name + ' ', ''), 
+                                    e.last_name) AS full_name,
+                                c.current_email
+                            FROM employees e
+                            JOIN employee_contact_details c ON e.employee_id = c.employee_id
+                            WHERE e.employee_id = %s
+                            """, [employee_id])
+                        result = cursor.fetchone()
+                        print(result)
+                        if result:
+                            full_name, email = result
+                            emails_to_notify.append((full_name, email))
+                        
+            # 4️⃣ Send email notifications
+            for name, email in emails_to_notify:
+                try:
+                    send_mail(
+                        subject="Payslip Generated",
+                        message=(
+                            f"Dear {name},\n\n"
+                            f"Your payslip for {month} {year} has been successfully generated. "
+                            f"You can now log in to the HRMS portal to download it.\n\n"
+                            f"Best regards,\nHR Team"
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[email],
+                        fail_silently=False,
+                    )
+                except Exception as mail_err:
+                    print(f"⚠️ Failed to send email to {email}: {mail_err}")
 
             return JsonResponse({"success": True})
-        
+
         except Exception as e:
             print("❌ Error in generate_payslips:", e)
             return JsonResponse({"success": False, "error": str(e)})
@@ -2161,7 +2202,7 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
                     float(row[3]),   # bonuses
                     float(row[4]),   # net pay
                     row[5].strftime("%b %Y") if row[5] else "",
-                    row[6].strftime("%d %b %Y") if row[6] else ""
+                    row[6].strftime("%d-%m-%Y") if row[6] else ""
                 ])
 
             response = HttpResponse(
@@ -2193,7 +2234,7 @@ class ExportPayslipsView(HRAdminRequiredMixin, View):
                     f"${float(row[3]):,.2f}",
                     f"${float(row[4]):,.2f}",
                     row[5].strftime("%b %Y") if row[5] else "",
-                    row[6].strftime("%d %b %Y") if row[6] else ""
+                    row[6].strftime("%d-%m-%Y") if row[6] else ""
                 ])
 
             table = Table(table_data, repeatRows=1)

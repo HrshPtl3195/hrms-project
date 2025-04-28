@@ -352,12 +352,14 @@
                                 <input type="date" id="licenseExpiryDate" name="licenseExpiryDate" required
                                     class="w-full bg-gray-300 border border-gray-300 rounded-lg px-4 py-2">
                             </div>
-                            <div class="space-y-2">
+                            <div class="space-y-2 ">
                                 <label class="block text-sm font-medium text-gray-600">Driving License (PDF only) <span
                                         class="text-red-500">*</span></label>
-                                <input type="file" id="licenseFile" name="licenseFile" required
-                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                    accept="application/pdf">
+                                <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                focus-within:ring-custom focus-within:border-custom">
+                                    <input type="file" id="licenseFile" name="licenseFile" required class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                    file:rounded-lg file:cursor-pointer focus:outline-none" accept="application/pdf">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -388,9 +390,12 @@
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-600">Passport (PDF only) <span
                                         class="text-red-500">*</span></label>
-                                <input type="file" id="passportFile" name="passportFile" required
-                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                    accept="application/pdf">
+                                <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                focus-within:ring-custom focus-within:border-custom">
+                                    <input type="file" id="passportFile" name="passportFile" required class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                        file:rounded-lg file:cursor-pointer focus:outline-none"
+                                        accept="application/pdf">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -430,9 +435,13 @@
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-gray-600">PR Card / Work
                                         Permit (PDF only) <span class="text-red-500">*</span></label>
-                                    <input type="file" id="prFile" name="prFile"
-                                        class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                        accept="application/pdf">
+                                    <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                        focus-within:ring-custom focus-within:border-custom">
+                                        <input type="file" id="prFile" name="prFile"
+                                            class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none"
+                                            accept="application/pdf">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -476,9 +485,13 @@
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-gray-600">SIN Certificate (PDF only)
                                         <span class="text-red-500">*</span></label>
-                                    <input type="file" id="sinFile" name="sinFile"
-                                        class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                        accept="application/pdf">
+                                    <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                        focus-within:ring-custom focus-within:border-custom">
+                                        <input type="file" id="sinFile" name="sinFile"
+                                            class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none"
+                                            accept="application/pdf">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -597,23 +610,35 @@
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-600"> Profile Image(JPG, JPEG or PNG
                                     only) <span class="text-red-500">*</span></label>
-                                <input type="file" id="profileImage" name="profileImage" required
-                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                    accept="image/png, image/jpeg, image/jpg">
+                                <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                    focus-within:ring-custom focus-within:border-custom">
+                                    <input type="file" id="profileImage" name="profileImage" required
+                                        class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none"
+                                        accept="image/png, image/jpeg, image/jpg">
+                                </div>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-600">Offer Letter (PDF only) <span
                                         class="text-red-500">*</span></label>
-                                <input type="file" id="offerLetterFile" name="offerLetterFile" required
-                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                    accept="application/pdf">
+                                <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                        focus-within:ring-custom focus-within:border-custom">
+                                    <input type="file" id="offerLetterFile" name="offerLetterFile" required
+                                        class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none"
+                                        accept="application/pdf">
+                                </div>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-600">Contract
                                     Letter (PDF only) <span class="text-red-500">*</span></label>
-                                <input type="file" id="contractLetterFile" name="contractLetterFile" required
-                                    class="w-full text-gray-600 bg-gray-300 border border-gray-300 rounded-lg px-4 py-2"
-                                    accept="application/pdf">
+                                <div class="w-full bg-gray-300 border border-gray-300 rounded-lg text-gray-800 focus-within:ring-1 
+                                    focus-within:ring-custom focus-within:border-custom">
+                                    <input type="file" id="contractLetterFile" name="contractLetterFile" required
+                                        class="w-full text-sm text-gray-800 file:bg-custom file:text-white file:border-custom file:px-4 file:py-2 
+                                                file:rounded-lg file:cursor-pointer focus:outline-none"
+                                        accept="application/pdf">
+                                </div>
                             </div>
                         </div>
                     </div>
